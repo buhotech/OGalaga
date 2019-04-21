@@ -7,8 +7,6 @@ type stateT = {
   image: imageT,
 };
 
-
-
 /* BOILERPLATE */
 
 let setup = (env) => {
@@ -26,17 +24,15 @@ let draw = ({image, shipX, rightPressed, leftPressed} as state, env) => {
   Draw.image(image, ~pos=(int_of_float(shipX), 500), env);
 
   if (rightPressed){
-    {...state, shipX: (shipX +. 10.) > float_of_int(Env.width(env)) ? -70.0 : shipX +. 10.0}
+    {...state, shipX: (shipX +. 4.2) > float_of_int(Env.width(env)) ? -70.0 : shipX +. 4.20}
   }
   else if (leftPressed){
-    {...state, shipX: (shipX -. 10.0) < -70.0 ? float_of_int(Env.width(env)) : shipX -. 10.0}
+    {...state, shipX: (shipX -. 4.20) < -70.0 ? float_of_int(Env.width(env)) : shipX -. 4.20}
   }
   else{
     state
   }
 };
-
-
 
 let keyPressed = ({shipX} as state, env) =>
   Events.(
@@ -59,6 +55,5 @@ let keyReleased = ({shipX} as state, env) =>
     | _ => state
     }
   );
-
 
 run(~setup, ~draw, ~keyPressed, ~keyReleased, ());
