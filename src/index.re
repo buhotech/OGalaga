@@ -39,25 +39,26 @@ let draw = ({image, shipX, rightPressed, leftPressed} as state, env) => {
 
 
 let keyPressed = ({shipX} as state, env) =>
-  Events.(
-    switch (Env.keyCode(env)) {
-    | Right
-    | D => {...state, rightPressed:true}
-    | Left
-    | A => {...state, leftPressed:true}
-    | _ => state
-    }
-  );
+  Events.(
+    switch (Env.keyCode(env)) {
+    | Right
+    | D => {...state, rightPressed:true}
+    | Left
+    | A => {...state, leftPressed:true}
+    | _ => state
+    }
+);
 
 let keyReleased = ({shipX} as state, env) =>
  Events.(
-    switch (Env.keyCode(env)) {
-    | Right
-    | D => {...state, rightPressed:false}
-    | Left
-    | A => {...state, leftPressed:false}
-    | _ => state
-    }
-  );
+    switch (Env.keyCode(env)) {
+    | Right
+    | D => {...state, rightPressed:false}
+    | Left
+    | A => {...state, leftPressed:false}
+    | _ => state
+    }
+  );
+
 
 run(~setup, ~draw, ~keyPressed, ~keyReleased, ());
