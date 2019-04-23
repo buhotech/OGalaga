@@ -5,6 +5,8 @@ type stateT = {
   rightPressed: bool,
   leftPressed: bool,
   image: imageT,
+  shotIMG: imageT,
+  shotBool: bool,
   enemy_ships: list((int, int)),
   enemy_ship: imageT
 };
@@ -27,6 +29,8 @@ let setup = (env) => {
   {
     image: Draw.loadImage(~filename="playerShip.png", env),
     enemy_ship: Draw.loadImage(~filename="enemyShip.png", env),
+    shotIMG:  Draw.loadImage(~filename="playerBullet.jpeg", env),
+    shotBool: false,
     shipX: 260.0,
     rightPressed: false,
     leftPressed: false,
@@ -34,11 +38,15 @@ let setup = (env) => {
   };
 }
 
-let draw = ({image, shipX, rightPressed, leftPressed, enemy_ships, enemy_ship} as state, env) => {
+let draw = ({image, shipX, rightPressed, leftPressed, enemy_ships, enemy_ship, shotBool, shotIMG} as state, env) => {
   Draw.background(Utils.color(~r=23, ~g=45, ~b=70, ~a=255), env);
   Draw.image(image, ~pos=(int_of_float(shipX), 500), env);
   List.iter(item => Draw.image(enemy_ship, ~pos=(item), env), enemy_ships)
+  if (shotBool){
+     Draw.image(shotIMG, ~pos=(int_of_float(shipX), 500), env);
 
+  }
+   
   if (rightPressed){
     {...state, shipX: (shipX +. 4.2) > float_of_int(Env.width(env)) ? -70.0 : shipX +. 4.20}
   }
@@ -57,6 +65,7 @@ let keyPressed = ({shipX} as state, env) =>
     | D => {...state, rightPressed:true}
     | Left
     | A => {...state, leftPressed:true}
+    | Space => {...state, shotBool:true}
     | _ => state
     }
 );
