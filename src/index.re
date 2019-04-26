@@ -14,53 +14,13 @@ type stateT = {
 };
 
 /**
-
-let newShips = List.filter(((xTemp,yTemp))=>{List.exists((((x,y))=>{
-   List.iter(((bulletX,bulletY))=>{
-         if(Utils.intersectRectRect(
-                     (float_of_int(xTemp + 31), float_of_int(yTemp)),
-                     31.,
-                     100.,
-                     (float_of_int(bulletX),float_of_int(bulletY)),
-                     20.,
-                     20.))
-             {
-             print_endline("hello");
-             }
-         }, bulletPositions);
-         true;
-     }),enemy_ships)},
-   enemy_ships);
-
-
-
-
-  List.iter(((bulletX,bulletY))=>{
-        if(List.exists((((x,y))=>{
-          Utils.intersectRectRect(
-                  ~rect1Pos: (x, y),
-                  ~rect1W: 92.,
-                  ~rect1H: 100.,
-                  ~rect2Pos: (bulletX, bulletY),
-                  ~rect2W: 20.,
-                  ~rect2H: 20.)  }),enemy_ships))
-            {
-              print_endline("Collision!");
-            }
-        }, bulletPositions);
-
 How to spawn things??
   Draw at location with utils.random
 
 spawning rectangles in flappy bird ~31:35
- if (shotBool){
-     Draw.image(shotIMG, ~pos=(int_of_float(shipX), 500), env);
-
-  }
 Spawn ships at random location
 Spawn star  at random location
 Spawn shot
-
 */
 
 /* BOILERPLATE */
@@ -104,45 +64,6 @@ let draw =
   Draw.image(image, ~pos=(int_of_float(shipX), 500), env);
   List.iter(item => Draw.image(enemy_ship_image, ~pos=item, env), enemy_ships);
 
-  /*
-     List.iter(((bulletX,bulletY))=>{  // let deadShipX;
-           if()
-               {
-
-                 print_endline("Collision");
-               }
-           }, bulletPositions);
-
-   */
-/* 
-  let newShips =
-    List.filter(
-      ((enemyX, enemyY)) => {
-        List.exists(
-          ((bulletX, bulletY)) =>
-            /* if ( */
-              {
-                print_endline("hello");
-                !Utils.intersectRectRect(
-              (float_of_int(enemyX + 31), float_of_int(enemyY)),
-              31.,
-              100.,
-              (float_of_int(bulletX), float_of_int(bulletY)),
-              20.,
-              20.,
-              );}
-              /* ) */
-              /* {
-                print_endline("hello");
-                true;
-              } */
-              ,
-          bulletPositions,
-        );
-      },
-      enemy_ships
-    ); */
-
   let newShips =
     List.filter(
       ((xTemp, yTemp)) =>
@@ -150,7 +71,6 @@ let draw =
           ((x, y)) => {
             !List.exists(
               ((bulletX, bulletY)) =>
-                /* if ( */
                   {Utils.intersectRectRect(
                       (float_of_int(xTemp + 31), float_of_int(yTemp)),
                       31.,
@@ -159,12 +79,8 @@ let draw =
                       20.,
                       20.,
                     );}
-                    /* ) {
-                  print_endline("hello");
-                }, */
               ,bulletPositions
             );
-            /* true; */
           },
           enemy_ships,
         ),
