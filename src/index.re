@@ -62,26 +62,29 @@ let draw =
     ) => {
   Draw.background(Utils.color(~r=23, ~g=45, ~b=70, ~a=255), env);
   Draw.image(image, ~pos=(int_of_float(shipX), 500), env);
-  List.iter(item => Draw.image(enemy_ship_image, ~pos=item, env), enemy_ships);
+  List.iter(
+    item => Draw.image(enemy_ship_image, ~pos=item, env),
+    enemy_ships,
+  );
 
   let newShips =
     List.filter(
       ((xTemp, yTemp)) =>
         List.exists(
-          ((x, y)) => {
-            !List.exists(
-              ((bulletX, bulletY)) =>
-                  {Utils.intersectRectRect(
-                      (float_of_int(xTemp + 31), float_of_int(yTemp)),
-                      31.,
-                      100.,
-                      (float_of_int(bulletX), float_of_int(bulletY)),
-                      20.,
-                      20.,
-                    );}
-              ,bulletPositions
-            );
-          },
+          ((x, y)) =>
+            !
+              List.exists(
+                ((bulletX, bulletY)) =>
+                  Utils.intersectRectRect(
+                    (float_of_int(xTemp + 31), float_of_int(yTemp)),
+                    31.,
+                    100.,
+                    (float_of_int(bulletX), float_of_int(bulletY)),
+                    20.,
+                    20.,
+                  ),
+                bulletPositions,
+              ),
           enemy_ships,
         ),
       enemy_ships,
@@ -114,7 +117,7 @@ let draw =
     bulletPositions,
     shipX: shipCurrentX,
     lastX: lastXNew,
-    enemy_ships: newShips
+    enemy_ships: newShips,
   };
 };
 
