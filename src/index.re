@@ -25,7 +25,7 @@ Spawn shot
 
 /* BOILERPLATE */
 let setup = env => {
-  Env.size(~width=600, ~height=600, env);
+  Env.size(~width=600, ~height=800, env);
   {
     image: Draw.loadImage(~filename="playerShip.png", env),
     bulletPositions: [(0, 500)],
@@ -61,7 +61,7 @@ let draw =
       env,
     ) => {
   Draw.background(Utils.color(~r=23, ~g=45, ~b=70, ~a=255), env);
-  Draw.image(image, ~pos=(int_of_float(shipX), 500), env);
+  Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
   List.iter(
     item => Draw.image(enemy_ship_image, ~pos=item, env),
     enemy_ships,
