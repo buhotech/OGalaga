@@ -117,7 +117,10 @@ let draw =
     bulletPositions,
     shipX: shipCurrentX,
     lastX: lastXNew,
-    enemy_ships: List.length(enemy_ships) < 3 ? List.append([(Utils.random(0, Env.width(env)), 10),],newShips) : newShips,
+    enemy_ships:
+      List.length(enemy_ships) < 3
+        ? List.append([(Utils.random(0, Env.width(env)), 10)], newShips)
+        : newShips,
   };
 };
 
