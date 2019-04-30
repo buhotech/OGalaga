@@ -30,19 +30,13 @@ let setup = env => {
     image: Draw.loadImage(~filename="playerShip.png", env),
     bulletPositions: [],
     enemy_ship_image: Draw.loadImage(~filename="enemyShip.png", env),
-    shotIMG: Draw.loadImage(~filename="playerBullet.jpeg", env),
+    shotIMG: Draw.loadImage(~filename="playerBullet.png", env),
     shotBool: false,
     shipX: 260.0,
     lastX: 0.,
     rightPressed: false,
     leftPressed: false,
     enemy_ships: [
-      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
-      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
-      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
-      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
-      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
-      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
     ],
   };
 };
@@ -63,7 +57,7 @@ let draw =
       } as state,
       env,
     ) => {
-  Draw.background(Utils.color(~r=23, ~g=45, ~b=70, ~a=255), env);
+  Draw.background(Utils.color(~r=0, ~g=25, ~b=45, ~a=255), env);
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
   List.iter(
     item => Draw.image(enemy_ship_image, ~pos=item, env),
@@ -79,12 +73,12 @@ let draw =
               List.exists(
                 ((bulletX, bulletY)) =>
                   Utils.intersectRectRect(
-                    (float_of_int(xTemp + 31), float_of_int(yTemp)),
+                    (float_of_int(xTemp + 11), float_of_int(yTemp)),
                     31.,
-                    100.,
+                    40.,
                     (float_of_int(bulletX), float_of_int(bulletY)),
-                    20.,
-                    20.,
+                    10.,
+                    10.,
                   ),
                 bulletPositions,
               ),
@@ -125,8 +119,8 @@ let newShips = List.map(((x, y)) => (x, y + 2), newShips);
     shipX: shipCurrentX,
     lastX: lastXNew,
     enemy_ships:
-      List.length(enemy_ships) < 6
-        ? List.append([(Utils.random(0, Env.width(env)), (0-(Utils.random(28, 48))))], newShips)
+      List.length(enemy_ships) < 148
+        ? List.append([(Utils.random(0, Env.width(env)), (0-(Utils.random(28, 600))))], newShips)
         : newShips,
   };
 };
