@@ -37,9 +37,12 @@ let setup = env => {
     rightPressed: false,
     leftPressed: false,
     enemy_ships: [
-      (Utils.random(0, Env.width(env)), 10),
-      (Utils.random(0, Env.width(env)), 10),
-      (Utils.random(0, Env.width(env)), 10),
+      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
+      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
+      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
+      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
+      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
+      (Utils.random(0, Env.width(env)),(0-(Utils.random(28, 48)))),
     ],
   };
 };
@@ -90,7 +93,11 @@ let draw =
       enemy_ships,
     );
 
-  let bulletPositions = List.map(((x, y)) => (x, y - 4), bulletPositions);
+    let newShips = List.filter(((xTemp, yTemp)) => (yTemp < 800), newShips);
+
+  let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletPositions);
+
+let newShips = List.map(((x, y)) => (x, y + 2), newShips);
 
   List.iter(
     ((x, y)) => Draw.image(shotIMG, ~pos=(x, y - 1), env),
@@ -118,8 +125,8 @@ let draw =
     shipX: shipCurrentX,
     lastX: lastXNew,
     enemy_ships:
-      List.length(enemy_ships) < 3
-        ? List.append([(Utils.random(0, Env.width(env)), 10)], newShips)
+      List.length(enemy_ships) < 6
+        ? List.append([(Utils.random(0, Env.width(env)), (0-(Utils.random(28, 48))))], newShips)
         : newShips,
   };
 };
@@ -136,7 +143,7 @@ let keyPressed = ({shipX, bulletPositions} as state, env) =>
         shotBool: true,
         bulletPositions:
           List.append(
-            [(int_of_float(shipX +. 34.), 500)],
+            [(int_of_float(shipX +. 34.), 700)],
             bulletPositions,
           ),
       }
