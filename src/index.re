@@ -28,7 +28,7 @@ let setup = env => {
   Env.size(~width=600, ~height=800, env);
   {
     image: Draw.loadImage(~filename="playerShip.png", env),
-    bulletPositions: [(0, 500)],
+    bulletPositions: [],
     enemy_ship_image: Draw.loadImage(~filename="enemyShip.png", env),
     shotIMG: Draw.loadImage(~filename="playerBullet.jpeg", env),
     shotBool: false,
