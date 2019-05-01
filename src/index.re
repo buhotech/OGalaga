@@ -86,6 +86,28 @@ let draw =
         ),
       enemy_ships,
     );
+      let bulletPositions =
+    List.filter(
+      ((bulletX, bulletY)) =>
+        List.exists(
+          ((x, y)) =>
+            !
+              List.exists(
+                ((xTemp, yTemp)) =>
+                  Utils.intersectRectRect(
+                    (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                    10.,
+                    10.,
+                    (float_of_int(bulletX), float_of_int(bulletY)),
+                    31.,
+                    40.,
+                  ),
+                newShips,
+              ),
+          bulletPositions,
+        ),
+      bulletPositions,
+    );
 
     let newShips = List.filter(((xTemp, yTemp)) => (yTemp < 800), newShips);
 
@@ -119,7 +141,7 @@ let newShips = List.map(((x, y)) => (x, y + 2), newShips);
     shipX: shipCurrentX,
     lastX: lastXNew,
     enemy_ships:
-      List.length(enemy_ships) < 148
+      List.length(enemy_ships) < 12
         ? List.append([(Utils.random(0, Env.width(env)), (0-(Utils.random(28, 600))))], newShips)
         : newShips,
   };
