@@ -65,7 +65,7 @@ let draw =
     ) => {
   Draw.background(Utils.color(~r=0, ~g=15, ~b=35, ~a=255), env);
     List.iter(
-    item => Draw.pixel(item, Utils.color(~r=235, ~g=225, ~b=0, ~a=255), env),
+    item => Draw.pixel(item, Utils.color(~r=(Utils.random(0, 255)), ~g=(Utils.random(0, 255)), ~b=(Utils.random(0, 255)), ~a=255), env),
     starsPositions,
   );
   
