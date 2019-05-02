@@ -40,8 +40,7 @@ let setup = env => {
     lastX: 0.,
     rightPressed: false,
     leftPressed: false,
-    enemy_ships: [
-    ],
+    enemy_ships: [],
   };
 };
 
@@ -64,11 +63,21 @@ let draw =
       env,
     ) => {
   Draw.background(Utils.color(~r=0, ~g=15, ~b=35, ~a=255), env);
-    List.iter(
-    item => Draw.pixel(item, Utils.color(~r=(Utils.random(0, 255)), ~g=(Utils.random(0, 255)), ~b=(Utils.random(0, 255)), ~a=255), env),
+  List.iter(
+    item =>
+      Draw.pixel(
+        item,
+        Utils.color(
+          ~r=Utils.random(0, 255),
+          ~g=Utils.random(0, 255),
+          ~b=Utils.random(0, 255),
+          ~a=255,
+        ),
+        env,
+      ),
     starsPositions,
   );
-  
+
   List.iter(
     item => Draw.image(enemy_ship_image, ~pos=item, env),
     enemy_ships,
@@ -97,7 +106,7 @@ let draw =
         ),
       enemy_ships,
     );
-      let bulletPositions =
+  let bulletPositions =
     List.filter(
       ((bulletX, bulletY)) =>
         List.exists(
@@ -120,13 +129,14 @@ let draw =
       bulletPositions,
     );
 
-    let newShips = List.filter(((xTemp, yTemp)) => (yTemp < 800), newShips);
-    let starsPositions = List.filter(((xTemp, yTemp)) => (yTemp < 800), starsPositions);
+  let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
+  let starsPositions =
+    List.filter(((xTemp, yTemp)) => yTemp < 800, starsPositions);
 
   let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletPositions);
   let starsPositions = List.map(((x, y)) => (x, y + 15), starsPositions);
 
-let newShips = List.map(((x, y)) => (x, y + 3), newShips);
+  let newShips = List.map(((x, y)) => (x, y + 3), newShips);
 
   List.iter(
     ((x, y)) => Draw.image(shotIMG, ~pos=(x, y - 1), env),
@@ -155,11 +165,27 @@ let newShips = List.map(((x, y)) => (x, y + 3), newShips);
     lastX: lastXNew,
     enemy_ships:
       List.length(enemy_ships) < 12
-        ? List.append([(Utils.random(50, Env.width(env)-100), (0-(Utils.random(28, 600))))], newShips)
+        ? List.append(
+            [
+              (
+                Utils.random(50, Env.width(env) - 100),
+                0 - Utils.random(28, 600),
+              ),
+            ],
+            newShips,
+          )
         : newShips,
     starsPositions:
       List.length(starsPositions) < 52
-        ? List.append([(Utils.random(-10, Env.width(env)+10), (0-(Utils.random(28, 600))))], starsPositions)
+        ? List.append(
+            [
+              (
+                Utils.random(-10, Env.width(env) + 10),
+                0 - Utils.random(28, 600),
+              ),
+            ],
+            starsPositions,
+          )
         : starsPositions,
   };
 };
