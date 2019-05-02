@@ -9,7 +9,9 @@ type stateT = {
   shotBool: bool,
   enemy_ships: list((int, int)),
   enemy_ship_image: imageT,
+  star_image: imageT,
   bulletPositions: list((int, int)),
+  starsPositions: list((int, int)),
   lastX: float,
 };
 
@@ -29,7 +31,9 @@ let setup = env => {
   {
     image: Draw.loadImage(~filename="playerShip.png", env),
     bulletPositions: [],
+    starsPositions: [],
     enemy_ship_image: Draw.loadImage(~filename="enemyShip.png", env),
+    star_image: Draw.loadImage(~filename="playerBullet.png", env),
     shotIMG: Draw.loadImage(~filename="playerBullet.png", env),
     shotBool: false,
     shipX: 260.0,
@@ -54,15 +58,22 @@ let draw =
         shotBool,
         shotIMG,
         bulletPositions,
+        starsPositions,
+        star_image,
       } as state,
       env,
     ) => {
-  Draw.background(Utils.color(~r=0, ~g=25, ~b=45, ~a=255), env);
-  Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
+  Draw.background(Utils.color(~r=0, ~g=15, ~b=35, ~a=255), env);
+    List.iter(
+    item => Draw.pixel(item, Utils.color(~r=235, ~g=225, ~b=0, ~a=255), env),
+    starsPositions,
+  );
+  
   List.iter(
     item => Draw.image(enemy_ship_image, ~pos=item, env),
     enemy_ships,
   );
+  Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
   let newShips =
     List.filter(
@@ -96,13 +107,13 @@ let draw =
                 ((xTemp, yTemp)) =>
                   Utils.intersectRectRect(
                     (float_of_int(xTemp + 11), float_of_int(yTemp)),
-                    10.,
-                    10.,
-                    (float_of_int(bulletX), float_of_int(bulletY)),
                     31.,
                     40.,
+                    (float_of_int(bulletX), float_of_int(bulletY)),
+                    10.,
+                    10.,
                   ),
-                newShips,
+                enemy_ships,
               ),
           bulletPositions,
         ),
@@ -110,10 +121,12 @@ let draw =
     );
 
     let newShips = List.filter(((xTemp, yTemp)) => (yTemp < 800), newShips);
+    let starsPositions = List.filter(((xTemp, yTemp)) => (yTemp < 800), starsPositions);
 
   let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletPositions);
+  let starsPositions = List.map(((x, y)) => (x, y + 15), starsPositions);
 
-let newShips = List.map(((x, y)) => (x, y + 2), newShips);
+let newShips = List.map(((x, y)) => (x, y + 3), newShips);
 
   List.iter(
     ((x, y)) => Draw.image(shotIMG, ~pos=(x, y - 1), env),
@@ -142,8 +155,12 @@ let newShips = List.map(((x, y)) => (x, y + 2), newShips);
     lastX: lastXNew,
     enemy_ships:
       List.length(enemy_ships) < 12
-        ? List.append([(Utils.random(0, Env.width(env)), (0-(Utils.random(28, 600))))], newShips)
+        ? List.append([(Utils.random(50, Env.width(env)-100), (0-(Utils.random(28, 600))))], newShips)
         : newShips,
+    starsPositions:
+      List.length(starsPositions) < 52
+        ? List.append([(Utils.random(-10, Env.width(env)+10), (0-(Utils.random(28, 600))))], starsPositions)
+        : starsPositions,
   };
 };
 
