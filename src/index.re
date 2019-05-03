@@ -1,6 +1,8 @@
 open Reprocessing;
 
 type stateT = {
+  gameHasStarted: bool,
+  exitStatus: bool,
   shipX: float,
   rightPressed: bool,
   leftPressed: bool,
@@ -15,6 +17,7 @@ type stateT = {
   lastX: float,
   score: int,
   font: fontT,
+  prompt: fontT,
 };
 
 /**
@@ -31,6 +34,8 @@ Spawn shot
 let setup = env => {
   Env.size(~width=600, ~height=800, env);
   {
+    gameHasStarted: false,
+    exitStatus: false,
     image: Draw.loadImage(~filename="assets/playerShip.png", env),
     bulletPositions: [],
     starsPositions: [],
@@ -42,6 +47,7 @@ let setup = env => {
     lastX: 0.,
     score: 0,
     font: Draw.loadFont(~filename="assets/font.fnt", ~isPixel=true, env),
+    prompt: Draw.loadFont(~filename="assets/words.fnt", ~isPixel=true, env),
     rightPressed: false,
     leftPressed: false,
     enemy_ships: [],
@@ -51,8 +57,11 @@ let setup = env => {
 let draw =
     (
       {
+        gameHasStarted,
+        exitStatus,
         score,
         font,
+        prompt,
         image,
         shipX,
         lastX,
@@ -68,6 +77,9 @@ let draw =
       } as state,
       env,
     ) => {
+
+  if (exitStatus) exit(0);
+
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
 
   List.iter(
@@ -89,14 +101,36 @@ let draw =
     item => Draw.image(enemy_ship_image, ~pos=item, env),
     enemy_ships,
   );
+
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
-  Draw.text(
-    ~font,
-    ~body=string_of_int(score),
-    ~pos=(Env.width(env) / 2, 40),
-    env,
-  );
+  if (gameHasStarted){
+    Draw.text(
+      ~font,
+      ~body=string_of_int(score),
+      ~pos=(Env.width(env) / 2, 40),
+      env,
+    );
+  }else{
+    Draw.text(
+      ~font=prompt,
+      ~body="Press 'G' to start",
+      ~pos=(200, 40),
+      env,
+    );
+    Draw.text(
+      ~font=prompt,
+      ~body="or",
+      ~pos=(Env.width(env) / 2, 90),
+      env,
+    );
+    Draw.text(
+      ~font=prompt,
+      ~body="'Q' to quit",
+      ~pos=(245, 140),
+      env,
+    );
+  }
 
   let newShips =
     List.filter(
@@ -148,12 +182,15 @@ let draw =
     List.length(enemy_ships) > List.length(newShips) ? score + 1 : score;
 
   let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
+
   let bulletPositions =
     List.filter(((xBullet, yBullet)) => yBullet > 0, bulletPositions);
+
   let starsPositions =
     List.filter(((xTemp, yTemp)) => yTemp < 800, starsPositions);
 
   let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletPositions);
+
   let starsPositions = List.map(((x, y)) => (x, y + 15), starsPositions);
 
   let newShips = List.map(((x, y)) => (x, y + 3), newShips);
@@ -171,12 +208,15 @@ let draw =
           ? shipX -. 4.20 < (-70.0)
               ? float_of_int(Env.width(env)) : shipX -. 4.20
           : shipX;
+
   let lastXNew = shotBool ? shipX : lastX;
+  
   /*
    -->add a new (x,y) bullet List
    -->iter if y > height
    ------>remove front element
    */
+  gameHasStarted ?
   {
     ...state,
     score: newScore,
@@ -208,12 +248,14 @@ let draw =
             starsPositions,
           )
         : starsPositions,
-  };
+  } : {...state, gameHasStarted:false};
 };
 
-let keyPressed = ({shipX, bulletPositions} as state, env) =>
+let keyPressed = ({shipX, bulletPositions, exitStatus} as state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
+    | Q => {...state, exitStatus:true}
+    | G => {...state, gameHasStarted: true}
     | Right
     | D => {...state, rightPressed: true}
     | Left
@@ -234,6 +276,7 @@ let keyPressed = ({shipX, bulletPositions} as state, env) =>
 let keyReleased = ({shipX} as state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
+    | G => {...state, gameHasStarted: true}
     | Right
     | D => {...state, rightPressed: false}
     | Left
@@ -242,4 +285,9 @@ let keyReleased = ({shipX} as state, env) =>
     }
   );
 
-run(~setup, ~draw, ~keyPressed, ~keyReleased, ());
+  /* let exit = (env) => Events.(switch (Env.keyCode(env)) {
+    | G => exit(0)
+    | _ => ()
+    }); */
+
+run(~setup, ~draw, ~keyPressed, ~keyReleased, /*~exit,*/ ());
