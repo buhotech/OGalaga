@@ -1,3 +1,7 @@
+## Demo
+
+![gif](https://media.giphy.com/media/3HAxiN9gwjY2HcVMQc/giphy.gif)
+
 ### Install
 
 ```
