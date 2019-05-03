@@ -77,8 +77,9 @@ let draw =
       } as state,
       env,
     ) => {
-
-  if (exitStatus) exit(0);
+  if (exitStatus) {
+    exit(0);
+  };
 
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
 
@@ -104,33 +105,18 @@ let draw =
 
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
-  if (gameHasStarted){
+  if (gameHasStarted) {
     Draw.text(
       ~font,
       ~body=string_of_int(score),
       ~pos=(Env.width(env) / 2, 40),
       env,
     );
-  }else{
-    Draw.text(
-      ~font=prompt,
-      ~body="Press 'G' to start",
-      ~pos=(200, 40),
-      env,
-    );
-    Draw.text(
-      ~font=prompt,
-      ~body="or",
-      ~pos=(Env.width(env) / 2, 90),
-      env,
-    );
-    Draw.text(
-      ~font=prompt,
-      ~body="'Q' to quit",
-      ~pos=(245, 140),
-      env,
-    );
-  }
+  } else {
+    Draw.text(~font=prompt, ~body="Press 'G' to start", ~pos=(200, 40), env);
+    Draw.text(~font=prompt, ~body="or", ~pos=(Env.width(env) / 2, 90), env);
+    Draw.text(~font=prompt, ~body="'Q' to quit", ~pos=(245, 140), env);
+  };
 
   let newShips =
     List.filter(
@@ -210,51 +196,52 @@ let draw =
           : shipX;
 
   let lastXNew = shotBool ? shipX : lastX;
-  
+
   /*
    -->add a new (x,y) bullet List
    -->iter if y > height
    ------>remove front element
    */
-  gameHasStarted ?
-  {
-    ...state,
-    score: newScore,
-    shotBool: false,
-    bulletPositions,
-    shipX: shipCurrentX,
-    lastX: lastXNew,
-    enemy_ships:
-      List.length(enemy_ships) < 12
-        ? List.append(
-            [
-              (
-                Utils.random(50, Env.width(env) - 100),
-                0 - Utils.random(28, 600),
-              ),
-            ],
-            newShips,
-          )
-        : newShips,
-    starsPositions:
-      List.length(starsPositions) < 52
-        ? List.append(
-            [
-              (
-                Utils.random(-10, Env.width(env) + 10),
-                0 - Utils.random(28, 600),
-              ),
-            ],
-            starsPositions,
-          )
-        : starsPositions,
-  } : {...state, gameHasStarted:false};
+  gameHasStarted
+    ? {
+      ...state,
+      score: newScore,
+      shotBool: false,
+      bulletPositions,
+      shipX: shipCurrentX,
+      lastX: lastXNew,
+      enemy_ships:
+        List.length(enemy_ships) < 12
+          ? List.append(
+              [
+                (
+                  Utils.random(50, Env.width(env) - 100),
+                  0 - Utils.random(28, 600),
+                ),
+              ],
+              newShips,
+            )
+          : newShips,
+      starsPositions:
+        List.length(starsPositions) < 52
+          ? List.append(
+              [
+                (
+                  Utils.random(-10, Env.width(env) + 10),
+                  0 - Utils.random(28, 600),
+                ),
+              ],
+              starsPositions,
+            )
+          : starsPositions,
+    }
+    : {...state, gameHasStarted: false};
 };
 
 let keyPressed = ({shipX, bulletPositions, exitStatus} as state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
-    | Q => {...state, exitStatus:true}
+    | Q => {...state, exitStatus: true}
     | G => {...state, gameHasStarted: true}
     | Right
     | D => {...state, rightPressed: true}
@@ -285,9 +272,9 @@ let keyReleased = ({shipX} as state, env) =>
     }
   );
 
-  /* let exit = (env) => Events.(switch (Env.keyCode(env)) {
-    | G => exit(0)
-    | _ => ()
-    }); */
+/* let exit = (env) => Events.(switch (Env.keyCode(env)) {
+   | G => exit(0)
+   | _ => ()
+   }); */
 
 run(~setup, ~draw, ~keyPressed, ~keyReleased, /*~exit,*/ ());
