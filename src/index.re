@@ -41,7 +41,7 @@ let setup = env => {
     shipX: 260.0,
     lastX: 0.,
     score: 0,
-    font: Draw.loadFont(~filename="myfont.fnt", ~isPixel=true, env),
+    font: Draw.loadFont(~filename="font.fnt", ~isPixel=true, env),
     rightPressed: false,
     leftPressed: false,
     enemy_ships: [],
