@@ -91,7 +91,12 @@ let draw =
   );
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
-  Draw.text(~font, ~body=string_of_int(score), ~pos=(Env.width(env)/2, 40), env);
+  Draw.text(
+    ~font,
+    ~body=string_of_int(score),
+    ~pos=(Env.width(env) / 2, 40),
+    env,
+  );
 
   let newShips =
     List.filter(
@@ -143,7 +148,8 @@ let draw =
     List.length(enemy_ships) > List.length(newShips) ? score + 1 : score;
 
   let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
-  let bulletPositions = List.filter(((xBullet, yBullet)) => yBullet > 0, bulletPositions);
+  let bulletPositions =
+    List.filter(((xBullet, yBullet)) => yBullet > 0, bulletPositions);
   let starsPositions =
     List.filter(((xTemp, yTemp)) => yTemp < 800, starsPositions);
 
