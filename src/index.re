@@ -14,7 +14,7 @@ type stateT = {
   starsPositions: list((int, int)),
   lastX: float,
   score: int,
-  font: fontT
+  font: fontT,
 };
 
 /**
@@ -88,7 +88,7 @@ let draw =
     item => Draw.image(enemy_ship_image, ~pos=item, env),
     enemy_ships,
   );
-  Draw.text(~font, ~body=string_of_int(score), ~pos=(20,10), env);
+  Draw.text(~font, ~body=string_of_int(score), ~pos=(20, 10), env);
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
   let newShips =
@@ -136,7 +136,8 @@ let draw =
       bulletPositions,
     );
 
-  let newScore = List.length(enemy_ships) > List.length(newShips) ? score+1 : score;
+  let newScore =
+    List.length(enemy_ships) > List.length(newShips) ? score + 1 : score;
 
   let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
   let starsPositions =
