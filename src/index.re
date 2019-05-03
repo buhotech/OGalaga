@@ -8,9 +8,13 @@ type stateT = {
   shotIMG: imageT,
   shotBool: bool,
   enemy_ships: list((int, int)),
-  enemy_ship: imageT,
+  enemy_ship_image: imageT,
+  star_image: imageT,
   bulletPositions: list((int, int)),
+  starsPositions: list((int, int)),
   lastX: float,
+  score: int,
+  font: fontT,
 };
 
 /**
@@ -18,34 +22,29 @@ How to spawn things??
   Draw at location with utils.random
 
 spawning rectangles in flappy bird ~31:35
- if (shotBool){
-     Draw.image(shotIMG, ~pos=(int_of_float(shipX), 500), env);
-
-  }
 Spawn ships at random location
 Spawn star  at random location
 Spawn shot
-
 */
 
 /* BOILERPLATE */
 let setup = env => {
-  Env.size(~width=600, ~height=600, env);
+  Env.size(~width=600, ~height=800, env);
   {
     image: Draw.loadImage(~filename="playerShip.png", env),
-    bulletPositions: [(0, 500)],
-    enemy_ship: Draw.loadImage(~filename="enemyShip.png", env),
-    shotIMG: Draw.loadImage(~filename="playerBullet.jpeg", env),
+    score: 0,
+    font: Draw.loadFont(~filename="font.fnt", env),
+    bulletPositions: [],
+    starsPositions: [],
+    enemy_ship_image: Draw.loadImage(~filename="enemyShip.png", env),
+    star_image: Draw.loadImage(~filename="playerBullet.png", env),
+    shotIMG: Draw.loadImage(~filename="playerBullet.png", env),
     shotBool: false,
     shipX: 260.0,
     lastX: 0.,
     rightPressed: false,
     leftPressed: false,
-    enemy_ships: [
-      (Utils.random(0, Env.width(env)), 10),
-      (Utils.random(0, Env.width(env)), 10),
-      (Utils.random(0, Env.width(env)), 10),
-    ],
+    enemy_ships: [],
   };
 };
 
@@ -53,24 +52,102 @@ let draw =
     (
       {
         image,
+        score,
+        font,
         shipX,
         lastX,
         rightPressed,
         leftPressed,
         enemy_ships,
-        enemy_ship,
+        enemy_ship_image,
         shotBool,
         shotIMG,
         bulletPositions,
+        starsPositions,
+        star_image,
       } as state,
       env,
     ) => {
-  Draw.background(Utils.color(~r=23, ~g=45, ~b=70, ~a=255), env);
-  Draw.image(image, ~pos=(int_of_float(shipX), 500), env);
+  Draw.background(Utils.color(~r=0, ~g=15, ~b=35, ~a=255), env);
+  List.iter(
+    item =>
+      Draw.pixel(
+        item,
+        Utils.color(
+          ~r=Utils.random(0, 255),
+          ~g=Utils.random(0, 255),
+          ~b=Utils.random(0, 255),
+          ~a=255,
+        ),
+        env,
+      ),
+    starsPositions,
+  );
 
-  List.iter(item => Draw.image(enemy_ship, ~pos=item, env), enemy_ships);
+  List.iter(
+    item => Draw.image(enemy_ship_image, ~pos=item, env),
+    enemy_ships,
+  );
+  Draw.text(~font, ~body=string_of_int(score), ~pos=(20, 10), env);
+  Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
-  let bulletPositions = List.map(((x, y)) => (x, y - 4), bulletPositions);
+  let newShips =
+    List.filter(
+      ((xTemp, yTemp)) =>
+        List.exists(
+          ((x, y)) =>
+            !
+              List.exists(
+                ((bulletX, bulletY)) =>
+                  Utils.intersectRectRect(
+                    (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                    31.,
+                    40.,
+                    (float_of_int(bulletX), float_of_int(bulletY)),
+                    10.,
+                    10.,
+                  ),
+                bulletPositions,
+              ),
+          enemy_ships,
+        ),
+      enemy_ships,
+    );
+  let bulletPositions =
+    List.filter(
+      ((bulletX, bulletY)) =>
+        List.exists(
+          ((x, y)) =>
+            !
+              List.exists(
+                ((xTemp, yTemp)) =>
+                  Utils.intersectRectRect(
+                    (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                    31.,
+                    40.,
+                    (float_of_int(bulletX), float_of_int(bulletY)),
+                    10.,
+                    10.,
+                  ),
+                enemy_ships,
+              ),
+          bulletPositions,
+        ),
+      bulletPositions,
+    );
+
+  let newScore =
+    List.length(enemy_ships) > List.length(newShips) ? score + 1 : score;
+
+  let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
+  let starsPositions =
+    List.filter(((xTemp, yTemp)) => yTemp < 800, starsPositions);
+
+  let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletPositions);
+  let starsPositions = List.map(((x, y)) => (x, y + 15), starsPositions);
+
+  let newShips = List.map(((x, y)) => (x, y + 3), newShips);
+
   List.iter(
     ((x, y)) => Draw.image(shotIMG, ~pos=(x, y - 1), env),
     bulletPositions,
@@ -92,10 +169,35 @@ let draw =
    */
   {
     ...state,
+    score: newScore,
     shotBool: false,
     bulletPositions,
     shipX: shipCurrentX,
     lastX: lastXNew,
+    enemy_ships:
+      List.length(enemy_ships) < 12
+        ? List.append(
+            [
+              (
+                Utils.random(50, Env.width(env) - 100),
+                0 - Utils.random(28, 600),
+              ),
+            ],
+            newShips,
+          )
+        : newShips,
+    starsPositions:
+      List.length(starsPositions) < 52
+        ? List.append(
+            [
+              (
+                Utils.random(-10, Env.width(env) + 10),
+                0 - Utils.random(28, 600),
+              ),
+            ],
+            starsPositions,
+          )
+        : starsPositions,
   };
 };
 
@@ -111,7 +213,7 @@ let keyPressed = ({shipX, bulletPositions} as state, env) =>
         shotBool: true,
         bulletPositions:
           List.append(
-            [(int_of_float(shipX +. 34.), 500)],
+            [(int_of_float(shipX +. 34.), 700)],
             bulletPositions,
           ),
       }
