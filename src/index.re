@@ -31,17 +31,17 @@ Spawn shot
 let setup = env => {
   Env.size(~width=600, ~height=800, env);
   {
-    image: Draw.loadImage(~filename="playerShip.png", env),
+    image: Draw.loadImage(~filename="assets/playerShip.png", env),
     bulletPositions: [],
     starsPositions: [],
-    enemy_ship_image: Draw.loadImage(~filename="enemyShip.png", env),
-    star_image: Draw.loadImage(~filename="playerBullet.png", env),
-    shotIMG: Draw.loadImage(~filename="playerBullet.png", env),
+    enemy_ship_image: Draw.loadImage(~filename="assets/enemyShip.png", env),
+    star_image: Draw.loadImage(~filename="assets/playerBullet.png", env),
+    shotIMG: Draw.loadImage(~filename="assets/playerBullet.png", env),
     shotBool: false,
     shipX: 260.0,
     lastX: 0.,
     score: 0,
-    font: Draw.loadFont(~filename="font.fnt", ~isPixel=true, env),
+    font: Draw.loadFont(~filename="assets/font.fnt", ~isPixel=true, env),
     rightPressed: false,
     leftPressed: false,
     enemy_ships: [],
@@ -91,7 +91,12 @@ let draw =
   );
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
-  Draw.text(~font, ~body=string_of_int(score), ~pos=(Env.width(env)/2, 40), env);
+  Draw.text(
+    ~font,
+    ~body=string_of_int(score),
+    ~pos=(Env.width(env) / 2, 40),
+    env,
+  );
 
   let newShips =
     List.filter(
@@ -143,7 +148,8 @@ let draw =
     List.length(enemy_ships) > List.length(newShips) ? score + 1 : score;
 
   let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
-  let bulletPositions = List.filter(((xBullet, yBullet)) => yBullet > 0, bulletPositions);
+  let bulletPositions =
+    List.filter(((xBullet, yBullet)) => yBullet > 0, bulletPositions);
   let starsPositions =
     List.filter(((xTemp, yTemp)) => yTemp < 800, starsPositions);
 
