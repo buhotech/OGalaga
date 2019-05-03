@@ -5,6 +5,7 @@ type stateT = {
   rightPressed: bool,
   leftPressed: bool,
   image: imageT,
+  font: fontT,
   shotIMG: imageT,
   shotBool: bool,
   enemy_ships: list((int, int)),
@@ -13,6 +14,7 @@ type stateT = {
   bulletPositions: list((int, int)),
   starsPositions: list((int, int)),
   lastX: float,
+  score:int
 };
 
 /**
@@ -38,6 +40,8 @@ let setup = env => {
     shotBool: false,
     shipX: 260.0,
     lastX: 0.,
+    score: 0,
+    font: Draw.loadFont(~filename="myfont.fnt", ~isPixel=true, env),
     rightPressed: false,
     leftPressed: false,
     enemy_ships: [],
@@ -47,6 +51,8 @@ let setup = env => {
 let draw =
     (
       {
+        score,
+        font,
         image,
         shipX,
         lastX,
@@ -62,7 +68,8 @@ let draw =
       } as state,
       env,
     ) => {
-  Draw.background(Utils.color(~r=0, ~g=15, ~b=35, ~a=255), env);
+  Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
+
   List.iter(
     item =>
       Draw.pixel(
@@ -83,6 +90,8 @@ let draw =
     enemy_ships,
   );
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
+
+  Draw.text(~font, ~body=string_of_int(score), ~pos=(Env.width(env)/2, 40), env);
 
   let newShips =
     List.filter(
@@ -106,6 +115,7 @@ let draw =
         ),
       enemy_ships,
     );
+  let newPoints = List.length(newShips) < List.length(enemy_ships) ? score+1: score;
   let bulletPositions =
     List.filter(
       ((bulletX, bulletY)) =>
@@ -130,6 +140,7 @@ let draw =
     );
 
   let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
+  let bulletPositions = List.filter(((xBullet, yBullet)) => yBullet > 0, bulletPositions);
   let starsPositions =
     List.filter(((xTemp, yTemp)) => yTemp < 800, starsPositions);
 
@@ -163,6 +174,7 @@ let draw =
     bulletPositions,
     shipX: shipCurrentX,
     lastX: lastXNew,
+    score: newPoints,
     enemy_ships:
       List.length(enemy_ships) < 12
         ? List.append(
