@@ -31,17 +31,17 @@ Spawn shot
 let setup = env => {
   Env.size(~width=600, ~height=800, env);
   {
-    image: Draw.loadImage(~filename="playerShip.png", env),
+    image: Draw.loadImage(~filename="assets/playerShip.png", env),
     bulletPositions: [],
     starsPositions: [],
-    enemy_ship_image: Draw.loadImage(~filename="enemyShip.png", env),
-    star_image: Draw.loadImage(~filename="playerBullet.png", env),
-    shotIMG: Draw.loadImage(~filename="playerBullet.png", env),
+    enemy_ship_image: Draw.loadImage(~filename="assets/enemyShip.png", env),
+    star_image: Draw.loadImage(~filename="assets/playerBullet.png", env),
+    shotIMG: Draw.loadImage(~filename="assets/playerBullet.png", env),
     shotBool: false,
     shipX: 260.0,
     lastX: 0.,
     score: 0,
-    font: Draw.loadFont(~filename="font.fnt", ~isPixel=true, env),
+    font: Draw.loadFont(~filename="assets/font.fnt", ~isPixel=true, env),
     rightPressed: false,
     leftPressed: false,
     enemy_ships: [],
