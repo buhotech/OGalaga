@@ -5,7 +5,6 @@ type stateT = {
   rightPressed: bool,
   leftPressed: bool,
   image: imageT,
-  font: fontT,
   shotIMG: imageT,
   shotBool: bool,
   enemy_ships: list((int, int)),
@@ -33,8 +32,6 @@ let setup = env => {
   Env.size(~width=600, ~height=800, env);
   {
     image: Draw.loadImage(~filename="playerShip.png", env),
-    score: 0,
-    font: Draw.loadFont(~filename="font.fnt", env),
     bulletPositions: [],
     starsPositions: [],
     enemy_ship_image: Draw.loadImage(~filename="enemyShip.png", env),
@@ -57,8 +54,6 @@ let draw =
         score,
         font,
         image,
-        score,
-        font,
         shipX,
         lastX,
         rightPressed,
@@ -94,7 +89,6 @@ let draw =
     item => Draw.image(enemy_ship_image, ~pos=item, env),
     enemy_ships,
   );
-  Draw.text(~font, ~body=string_of_int(score), ~pos=(20, 10), env);
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
   Draw.text(~font, ~body=string_of_int(score), ~pos=(Env.width(env)/2, 40), env);
@@ -121,7 +115,7 @@ let draw =
         ),
       enemy_ships,
     );
-  let newPoints = List.length(newShips) < List.length(enemy_ships) ? score+1: score;
+
   let bulletPositions =
     List.filter(
       ((bulletX, bulletY)) =>
@@ -184,7 +178,6 @@ let draw =
     bulletPositions,
     shipX: shipCurrentX,
     lastX: lastXNew,
-    score: newPoints,
     enemy_ships:
       List.length(enemy_ships) < 12
         ? List.append(
