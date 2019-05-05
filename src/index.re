@@ -249,7 +249,7 @@ let draw =
           : starPositions,
     }
     /* IF GAME has yet to START or has been PAUSED
-     * If game PAUSED freeze PLAYER 
+     * If game PAUSED freeze PLAYER
      * If game NEVER STARTED keep PLAYER CENTERED
      */
     : {
@@ -284,7 +284,7 @@ let keyPressed =
     }
   );
 
-let keyReleased = ({shipX} as state, env) =>
+let keyReleased = (state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
     | Right
