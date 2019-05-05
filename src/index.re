@@ -23,6 +23,7 @@ type stateT = {
   bulletImage: imageT,
   font: fontT,
   backgroundMusic: soundT,
+  haveNotPlayedSongYet: bool,
 };
 
 /* BOILERPLATE */
@@ -47,8 +48,8 @@ let setup = env => {
     bulletImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
     backgroundMusic: Env.loadSound("assets/b.wav", env),
+    haveNotPlayedSongYet: true,
   };
-
 };
 
 let draw =
@@ -72,6 +73,7 @@ let draw =
         bulletImage,
         font,
         backgroundMusic,
+        haveNotPlayedSongYet,
       } as state,
       env,
     ) => {
@@ -79,9 +81,11 @@ let draw =
   if (exitStatus) {
     exit(0);
   };
-// //
 
- Env.playSound(backgroundMusic, env);
+  if (gameWasStarted && haveNotPlayedSongYet){
+    Env.playSound(backgroundMusic, ~volume=2.110, ~loop=true, env);
+  }
+
   /* Paint background */
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
 
@@ -221,6 +225,7 @@ let draw =
   gameHasStarted
     ? {
       ...state,
+      haveNotPlayedSongYet: false,
       score: newScore,
       shotBool: false,
       bulletPositions,
@@ -262,7 +267,7 @@ let draw =
 };
 
 let keyPressed =
-    ({shipX, bulletPositions, exitStatus, gameHasStarted} as state, env) =>
+    ({shipX, bulletPositions, exitStatus, gameHasStarted, haveNotPlayedSongYet} as state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
     | Q => {...state, exitStatus: true}
@@ -285,7 +290,6 @@ let keyPressed =
     | _ => state
     }
   );
-
 let keyReleased = ({shipX} as state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
