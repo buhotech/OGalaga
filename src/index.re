@@ -16,12 +16,13 @@ type stateT = {
   starPositions: list((int, int)),
   shipX: float,
   lastX: float,
-  /* Images & Fonts */
+  /* Media */
   enemyShipImage: imageT,
   playerShipImage: imageT,
   starImage: imageT,
   bulletImage: imageT,
   font: fontT,
+  backgroundMusic: soundT,
 };
 
 /* BOILERPLATE */
@@ -45,7 +46,9 @@ let setup = env => {
     starImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     bulletImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
+    backgroundMusic: Env.loadSound("assets/b.wav", env),
   };
+
 };
 
 let draw =
@@ -68,6 +71,7 @@ let draw =
         starImage,
         bulletImage,
         font,
+        backgroundMusic,
       } as state,
       env,
     ) => {
@@ -75,7 +79,9 @@ let draw =
   if (exitStatus) {
     exit(0);
   };
+// //
 
+ Env.playSound(backgroundMusic, env);
   /* Paint background */
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
 
@@ -211,9 +217,6 @@ let draw =
               ? float_of_int(Env.width(env)) : shipX -. 4.20
           : shipX;
 
-  /* I DON'T REMEMBER. PLEASE DOCUMENT THIS FOR ME, ANGEL */
-  let lastXNew = shotBool ? shipX : lastX;
-
   /* NEXT GAME STATE */
   gameHasStarted
     ? {
@@ -222,7 +225,6 @@ let draw =
       shotBool: false,
       bulletPositions,
       shipX: shipCurrentX,
-      lastX: lastXNew,
       enemyShips:
         List.length(enemyShips) < 12
           ? List.append(
@@ -249,7 +251,7 @@ let draw =
           : starPositions,
     }
     /* IF GAME has yet to START or has been PAUSED
-     * If game PAUSED freeze PLAYER 
+     * If game PAUSED freeze PLAYER
      * If game NEVER STARTED keep PLAYER CENTERED
      */
     : {
