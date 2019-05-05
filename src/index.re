@@ -290,7 +290,8 @@ let keyPressed =
     | _ => state
     }
   );
-let keyReleased = ({shipX} as state, env) =>
+
+let keyReleased = (state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
     | Right
