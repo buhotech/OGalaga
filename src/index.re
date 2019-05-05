@@ -1,35 +1,28 @@
 open Reprocessing;
 
 type stateT = {
+  /* Running Status */
   gameHasStarted: bool,
   gameWasStarted: bool,
   exitStatus: bool,
-  shipX: float,
+  /* User Activities */
   rightPressed: bool,
   leftPressed: bool,
-  image: imageT,
-  shotIMG: imageT,
   shotBool: bool,
-  enemy_ships: list((int, int)),
-  enemy_ship_image: imageT,
-  star_image: imageT,
-  bulletPositions: list((int, int)),
-  starsPositions: list((int, int)),
-  lastX: float,
   score: int,
+  /* Actor Locations */
+  enemyShips: list((int, int)),
+  bulletPositions: list((int, int)),
+  starPositions: list((int, int)),
+  shipX: float,
+  lastX: float,
+  /* Images & Fonts */
+  enemyShipImage: imageT,
+  playerShipImage: imageT,
+  starImage: imageT,
+  bulletImage: imageT,
   font: fontT,
-  prompt: fontT,
 };
-
-/**
-How to spawn things??
-  Draw at location with utils.random
-
-spawning rectangles in flappy bird ~31:35
-Spawn ships at random location
-Spawn star  at random location
-Spawn shot
-*/
 
 /* BOILERPLATE */
 let setup = env => {
@@ -38,21 +31,20 @@ let setup = env => {
     gameHasStarted: false,
     gameWasStarted: false,
     exitStatus: false,
-    image: Draw.loadImage(~filename="assets/playerShip.png", env),
-    bulletPositions: [],
-    starsPositions: [],
-    enemy_ship_image: Draw.loadImage(~filename="assets/enemyShip.png", env),
-    star_image: Draw.loadImage(~filename="assets/playerBullet.png", env),
-    shotIMG: Draw.loadImage(~filename="assets/playerBullet.png", env),
-    shotBool: false,
-    shipX: float_of_int(Env.width(env) / 2 - 30),
-    lastX: 0.,
-    score: 0,
-    font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
-    prompt: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
     rightPressed: false,
     leftPressed: false,
-    enemy_ships: [],
+    shotBool: false,
+    score: 0,
+    enemyShips: [],
+    bulletPositions: [],
+    starPositions: [],
+    shipX: float_of_int(Env.width(env) / 2 - 30),
+    lastX: 0.,
+    enemyShipImage: Draw.loadImage(~filename="assets/enemyShip.png", env),
+    playerShipImage: Draw.loadImage(~filename="assets/playerShip.png", env),
+    starImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
+    bulletImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
+    font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
   };
 };
 
@@ -62,30 +54,32 @@ let draw =
         gameHasStarted,
         gameWasStarted,
         exitStatus,
-        score,
-        font,
-        prompt,
-        image,
-        shipX,
-        lastX,
         rightPressed,
         leftPressed,
-        enemy_ships,
-        enemy_ship_image,
         shotBool,
-        shotIMG,
+        score,
+        enemyShips,
         bulletPositions,
-        starsPositions,
-        star_image,
+        starPositions,
+        shipX,
+        lastX,
+        enemyShipImage,
+        playerShipImage,
+        starImage,
+        bulletImage,
+        font,
       } as state,
       env,
     ) => {
+  /* If the user hits 'Q' => exit window/game */
   if (exitStatus) {
     exit(0);
   };
 
+  /* Paint background */
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
 
+  /* Draw stars */
   List.iter(
     item =>
       Draw.pixel(
@@ -98,16 +92,26 @@ let draw =
         ),
         env,
       ),
-    starsPositions,
+    starPositions,
   );
 
+  /* Draw enemies */
+  List.iter(item => Draw.image(enemyShipImage, ~pos=item, env), enemyShips);
+
+  /* Draw Player */
+  Draw.image(playerShipImage, ~pos=(int_of_float(shipX), 700), env);
+
+  /* Draw bullets */
   List.iter(
-    item => Draw.image(enemy_ship_image, ~pos=item, env),
-    enemy_ships,
+    ((x, y)) => Draw.image(bulletImage, ~pos=(x, y - 1), env),
+    bulletPositions,
   );
 
-  Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
-
+  /*
+   * Print SCORE if game has started
+   * Print START PROMPT if player has yet to start game
+   * Print RESUME PROMPT if game is pauseed
+   */
   Draw.text(
     ~font,
     ~body=
@@ -122,6 +126,7 @@ let draw =
     env,
   );
 
+  /* Filter out ships that have collided with a bullet */
   let newShips =
     List.filter(
       ((xTemp, yTemp)) =>
@@ -140,11 +145,12 @@ let draw =
                   ),
                 bulletPositions,
               ),
-          enemy_ships,
+          enemyShips,
         ),
-      enemy_ships,
+      enemyShips,
     );
 
+  /* Filter out bullets that have collided with a ship */
   let bulletPositions =
     List.filter(
       ((bulletX, bulletY)) =>
@@ -161,35 +167,41 @@ let draw =
                     10.,
                     10.,
                   ),
-                enemy_ships,
+                enemyShips,
               ),
           bulletPositions,
         ),
       bulletPositions,
     );
 
+  /*
+   * At this point, only ships that have been SHOT are DESTROYED (filter above)
+   * Therefore, we can give a point for every ship destroyed
+   */
   let newScore =
-    List.length(enemy_ships) > List.length(newShips) ? score + 1 : score;
+    List.length(enemyShips) > List.length(newShips) ? score + 1 : score;
 
+  /* Now we can FILTER out ENEMY SHIPS that are out of bounds */
   let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
 
+  /* Now we can FILTER out BULLETS that are out of bounds */
   let bulletPositions =
     List.filter(((xBullet, yBullet)) => yBullet > 0, bulletPositions);
 
-  let starsPositions =
-    List.filter(((xTemp, yTemp)) => yTemp < 800, starsPositions);
+  /* Now we can FILTER out STARS that are out of bounds */
+  let starPositions =
+    List.filter(((xTemp, yTemp)) => yTemp < 800, starPositions);
 
+  /* MOVE BULLETS UPWARD */
   let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletPositions);
 
-  let starsPositions = List.map(((x, y)) => (x, y + 15), starsPositions);
+  /* MOVE STARS DOWNWARD */
+  let starPositions = List.map(((x, y)) => (x, y + 15), starPositions);
 
+  /* MOVE SHIPS DOWNWARD */
   let newShips = List.map(((x, y)) => (x, y + 3), newShips);
 
-  List.iter(
-    ((x, y)) => Draw.image(shotIMG, ~pos=(x, y - 1), env),
-    bulletPositions,
-  );
-
+  /* Set new X COORDINATE for PLAYER */
   let shipCurrentX =
     rightPressed
       ? shipX +. 4.2 > float_of_int(Env.width(env))
@@ -199,13 +211,10 @@ let draw =
               ? float_of_int(Env.width(env)) : shipX -. 4.20
           : shipX;
 
+  /* I DON'T REMEMBER. PLEASE DOCUMENT THIS FOR ME, ANGEL */
   let lastXNew = shotBool ? shipX : lastX;
 
-  /*
-   -->add a new (x,y) bullet List
-   -->iter if y > height
-   ------>remove front element
-   */
+  /* NEXT GAME STATE */
   gameHasStarted
     ? {
       ...state,
@@ -214,8 +223,8 @@ let draw =
       bulletPositions,
       shipX: shipCurrentX,
       lastX: lastXNew,
-      enemy_ships:
-        List.length(enemy_ships) < 12
+      enemyShips:
+        List.length(enemyShips) < 12
           ? List.append(
               [
                 (
@@ -226,8 +235,8 @@ let draw =
               newShips,
             )
           : newShips,
-      starsPositions:
-        List.length(starsPositions) < 52
+      starPositions:
+        List.length(starPositions) < 52
           ? List.append(
               [
                 (
@@ -235,10 +244,14 @@ let draw =
                   0 - Utils.random(28, 600),
                 ),
               ],
-              starsPositions,
+              starPositions,
             )
-          : starsPositions,
+          : starPositions,
     }
+    /* IF GAME has yet to START or has been PAUSED
+     * If game PAUSED freeze PLAYER 
+     * If game NEVER STARTED keep PLAYER CENTERED
+     */
     : {
       ...state,
       shipX: gameWasStarted ? shipX : float_of_int(Env.width(env) / 2 - 30),
