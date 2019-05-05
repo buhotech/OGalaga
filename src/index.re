@@ -2,6 +2,7 @@ open Reprocessing;
 
 type stateT = {
   gameHasStarted: bool,
+  gameWasStarted: bool,
   exitStatus: bool,
   shipX: float,
   rightPressed: bool,
@@ -35,6 +36,7 @@ let setup = env => {
   Env.size(~width=600, ~height=800, env);
   {
     gameHasStarted: false,
+    gameWasStarted: false,
     exitStatus: false,
     image: Draw.loadImage(~filename="assets/playerShip.png", env),
     bulletPositions: [],
@@ -43,11 +45,11 @@ let setup = env => {
     star_image: Draw.loadImage(~filename="assets/playerBullet.png", env),
     shotIMG: Draw.loadImage(~filename="assets/playerBullet.png", env),
     shotBool: false,
-    shipX: 260.0,
+    shipX: float_of_int(Env.width(env) / 2 - 30),
     lastX: 0.,
     score: 0,
-    font: Draw.loadFont(~filename="assets/font.fnt", ~isPixel=true, env),
-    prompt: Draw.loadFont(~filename="assets/words.fnt", ~isPixel=true, env),
+    font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
+    prompt: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
     rightPressed: false,
     leftPressed: false,
     enemy_ships: [],
@@ -58,6 +60,7 @@ let draw =
     (
       {
         gameHasStarted,
+        gameWasStarted,
         exitStatus,
         score,
         font,
@@ -105,18 +108,19 @@ let draw =
 
   Draw.image(image, ~pos=(int_of_float(shipX), 700), env);
 
-  if (gameHasStarted) {
-    Draw.text(
-      ~font,
-      ~body=string_of_int(score),
-      ~pos=(Env.width(env) / 2, 40),
-      env,
-    );
-  } else {
-    Draw.text(~font=prompt, ~body="Press 'G' to start", ~pos=(200, 40), env);
-    Draw.text(~font=prompt, ~body="or", ~pos=(Env.width(env) / 2, 90), env);
-    Draw.text(~font=prompt, ~body="'Q' to quit", ~pos=(245, 140), env);
-  };
+  Draw.text(
+    ~font,
+    ~body=
+      gameHasStarted
+        ? string_of_int(score)
+        : gameWasStarted
+            ? "Press 'P' to resume or 'Q' to quit"
+            : "Press 'P' to start or 'Q' to quit",
+    ~pos=
+      gameHasStarted
+        ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 240, 40),
+    env,
+  );
 
   let newShips =
     List.filter(
@@ -235,14 +239,19 @@ let draw =
             )
           : starsPositions,
     }
-    : {...state, gameHasStarted: false};
+    : {
+      ...state,
+      shipX: gameWasStarted ? shipX : float_of_int(Env.width(env) / 2 - 30),
+      gameHasStarted: false,
+    };
 };
 
-let keyPressed = ({shipX, bulletPositions, exitStatus} as state, env) =>
+let keyPressed =
+    ({shipX, bulletPositions, exitStatus, gameHasStarted} as state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
     | Q => {...state, exitStatus: true}
-    | G => {...state, gameHasStarted: true}
+    | P => {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
     | Right
     | D => {...state, rightPressed: true}
     | Left
@@ -251,10 +260,12 @@ let keyPressed = ({shipX, bulletPositions, exitStatus} as state, env) =>
         ...state,
         shotBool: true,
         bulletPositions:
-          List.append(
-            [(int_of_float(shipX +. 34.), 700)],
-            bulletPositions,
-          ),
+          gameHasStarted
+            ? List.append(
+                [(int_of_float(shipX +. 34.), 700)],
+                bulletPositions,
+              )
+            : bulletPositions,
       }
     | _ => state
     }
@@ -263,7 +274,6 @@ let keyPressed = ({shipX, bulletPositions, exitStatus} as state, env) =>
 let keyReleased = ({shipX} as state, env) =>
   Events.(
     switch (Env.keyCode(env)) {
-    | G => {...state, gameHasStarted: true}
     | Right
     | D => {...state, rightPressed: false}
     | Left
@@ -272,9 +282,4 @@ let keyReleased = ({shipX} as state, env) =>
     }
   );
 
-/* let exit = (env) => Events.(switch (Env.keyCode(env)) {
-   | G => exit(0)
-   | _ => ()
-   }); */
-
-run(~setup, ~draw, ~keyPressed, ~keyReleased, /*~exit,*/ ());
+run(~setup, ~draw, ~keyPressed, ~keyReleased, ());
