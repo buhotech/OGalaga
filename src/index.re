@@ -127,15 +127,16 @@ let draw =
     ~font,
     ~body=
       playerDead
-        ? "GAME OVER                         "
+        ? "GAME OVER - SPACE TO RESTART"
         : gameHasStarted
             ? string_of_int(score)
             : gameWasStarted
                 ? "Press 'P' to resume or 'Q' to quit"
                 : "Press 'P' to start or 'Q' to quit",
     ~pos=
+      playerDead? ((Env.width(env)/2) - 280, 40) :
       gameHasStarted
-        ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 240, 40),
+        ? (Env.width(env) / 2, 40) : ((Env.width(env) / 2) - 240, 40),
     env,
   );
 
@@ -236,7 +237,7 @@ let draw =
   let starPositions = List.map(((x, y)) => (x, y + 15), starPositions);
 
   /* MOVE SHIPS DOWNWARD */
-  let newShips = List.map(((x, y)) => (x, y + 3), newShips);
+  let newShips = List.map(((x, y)) => (x, y + 13), newShips);
 
   /* Set new X COORDINATE for PLAYER */
   let shipCurrentX =
@@ -300,26 +301,49 @@ let draw =
 };
 
 let keyPressed =
-    ({shipX, bulletPositions, exitStatus, gameHasStarted} as state, env) =>
+    (
+      {shipX, bulletPositions, exitStatus, gameHasStarted, playerDead} as state,
+      env,
+    ) =>
   Events.(
     switch (Env.keyCode(env)) {
     | Q => {...state, exitStatus: true}
-    | P => {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
+    | P =>
+      playerDead
+        ? {...state, shipX}
+        : {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
     | Right
     | D => {...state, rightPressed: true}
     | Left
     | A => {...state, leftPressed: true}
-    | Space => {
-        ...state,
-        shotBool: true,
-        bulletPositions:
-          gameHasStarted
-            ? List.append(
-                [(int_of_float(shipX +. 34.), 700)],
-                bulletPositions,
-              )
-            : bulletPositions,
-      }
+    | Space =>
+      playerDead
+        ? {
+          ...state,
+          playerDead: false,
+          gameHasStarted: true,
+          gameWasStarted: true,
+          exitStatus: false,
+          rightPressed: false,
+          leftPressed: false,
+          shotBool: false,
+          score: 0,
+          enemyShips: [],
+          bulletPositions: [],
+          starPositions: [],
+          shipX,
+        }
+        : {
+          ...state,
+          shotBool: true,
+          bulletPositions:
+            gameHasStarted
+              ? List.append(
+                  [(int_of_float(shipX +. 34.), 700)],
+                  bulletPositions,
+                )
+              : bulletPositions,
+        }
     | _ => state
     }
   );
