@@ -237,7 +237,7 @@ let draw =
   let starPositions = List.map(((x, y)) => (x, y + 15), starPositions);
 
   /* MOVE SHIPS DOWNWARD */
-  let newShips = List.map(((x, y)) => (x, y + 13), newShips);
+  let newShips = List.map(((x, y)) => (x, y + 3), newShips);
 
   /* Set new X COORDINATE for PLAYER */
   let shipCurrentX =
