@@ -134,9 +134,10 @@ let draw =
                 ? "Press 'P' to resume or 'Q' to quit"
                 : "Press 'P' to start or 'Q' to quit",
     ~pos=
-      playerDead? ((Env.width(env)/2) - 280, 40) :
-      gameHasStarted
-        ? (Env.width(env) / 2, 40) : ((Env.width(env) / 2) - 240, 40),
+      playerDead
+        ? (Env.width(env) / 2 - 280, 40)
+        : gameHasStarted
+            ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 240, 40),
     env,
   );
 
@@ -144,19 +145,19 @@ let draw =
   let enemiesNotShot =
     List.filter(
       ((xTemp, yTemp)) =>
-            !
-              List.exists(
-                ((bulletX, bulletY)) =>
-                  Utils.intersectRectRect(
-                    (float_of_int(xTemp + 11), float_of_int(yTemp)),
-                    31.,
-                    40.,
-                    (float_of_int(bulletX), float_of_int(bulletY)),
-                    10.,
-                    10.,
-                  ),
-                bulletPositions,
+        !
+          List.exists(
+            ((bulletX, bulletY)) =>
+              Utils.intersectRectRect(
+                (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                31.,
+                40.,
+                (float_of_int(bulletX), float_of_int(bulletY)),
+                10.,
+                10.,
               ),
+            bulletPositions,
+          ),
       enemyShips,
     );
 
@@ -164,19 +165,19 @@ let draw =
   let strayBullets =
     List.filter(
       ((bulletX, bulletY)) =>
-            !
-              List.exists(
-                ((xTemp, yTemp)) =>
-                  Utils.intersectRectRect(
-                    (float_of_int(xTemp + 11), float_of_int(yTemp)),
-                    31.,
-                    40.,
-                    (float_of_int(bulletX), float_of_int(bulletY)),
-                    10.,
-                    10.,
-                  ),
-                enemyShips,
+        !
+          List.exists(
+            ((xTemp, yTemp)) =>
+              Utils.intersectRectRect(
+                (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                31.,
+                40.,
+                (float_of_int(bulletX), float_of_int(bulletY)),
+                10.,
+                10.,
               ),
+            enemyShips,
+          ),
       bulletPositions,
     );
 
@@ -189,7 +190,7 @@ let draw =
       ? score + 1 : score;
 
   /* filter out ships that hit player
-   * At this point in this frame, the only enemies left on screen are 
+   * At this point in this frame, the only enemies left on screen are
    * ships that have not gone out of bounds or been shot
    * Any other collision would be between an enemy and player ship
    */
@@ -216,7 +217,8 @@ let draw =
     List.length(enemiesNotShot) > List.length(survivingEnemies);
 
   /* Now we can FILTER out ENEMY SHIPS that are out of bounds */
-  let enemiesStillOnScreen = List.filter(((xTemp, yTemp)) => yTemp < 800, survivingEnemies);
+  let enemiesStillOnScreen =
+    List.filter(((xTemp, yTemp)) => yTemp < 800, survivingEnemies);
 
   /* Now we can FILTER out BULLETS that are out of bounds */
   let bulletsStillOnScreen =
@@ -227,37 +229,43 @@ let draw =
     List.filter(((xTemp, yTemp)) => yTemp < 800, starPositions);
 
   /* MOVE BULLETS UPWARD */
-  let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletsStillOnScreen);
+  let bulletPositions =
+    List.map(((x, y)) => (x, y - 2), bulletsStillOnScreen);
 
   /* MOVE STARS DOWNWARD */
   let starPositions = List.map(((x, y)) => (x, y + 15), starPositions);
 
   /* MOVE SHIPS DOWNWARD */
-  let enemiesWithUpdatedPositions = List.map(((x, y)) => (x, y + 3), enemiesStillOnScreen);
+  let enemiesWithUpdatedPositions =
+    List.map(((x, y)) => (x, y + 3), enemiesStillOnScreen);
 
   /* respawn enemies */
-  let remainingEnemies = List.length(enemyShips) < 12
-              ? List.append(
-                  [(
-                      Utils.random(50, Env.width(env) - 100),
-                      0 - Utils.random(28, 600),
-                  )],
-                  enemiesWithUpdatedPositions,
-                )
-              : enemiesWithUpdatedPositions
+  let remainingEnemies =
+    List.length(enemyShips) < 12
+      ? List.append(
+          [
+            (
+              Utils.random(50, Env.width(env) - 100),
+              0 - Utils.random(28, 600),
+            ),
+          ],
+          enemiesWithUpdatedPositions,
+        )
+      : enemiesWithUpdatedPositions;
 
   /* respawning stars */
-  let prettySky = List.length(starPositions) < 52
-              ? List.append(
-                  [
-                    (
-                      Utils.random(-10, Env.width(env) + 10),
-                      0 - Utils.random(28, 600),
-                    ),
-                  ],
-                  starPositions,
-                )
-              : starPositions
+  let prettySky =
+    List.length(starPositions) < 52
+      ? List.append(
+          [
+            (
+              Utils.random(-10, Env.width(env) + 10),
+              0 - Utils.random(28, 600),
+            ),
+          ],
+          starPositions,
+        )
+      : starPositions;
 
   /* Set new X COORDINATE for PLAYER */
   let shipCurrentX =
