@@ -5,6 +5,7 @@ type stateT = {
   gameHasStarted: bool,
   gameWasStarted: bool,
   exitStatus: bool,
+  playerDead: bool,
   /* User Activities */
   rightPressed: bool,
   leftPressed: bool,
@@ -23,7 +24,6 @@ type stateT = {
   starImage: imageT,
   bulletImage: imageT,
   font: fontT,
-  playerDead: bool,
 };
 
 /* BOILERPLATE */
@@ -33,6 +33,7 @@ let setup = env => {
     gameHasStarted: false,
     gameWasStarted: false,
     exitStatus: false,
+    playerDead: false,
     rightPressed: false,
     leftPressed: false,
     shotBool: false,
@@ -49,7 +50,6 @@ let setup = env => {
     starImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     bulletImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
-    playerDead: false,
   };
 };
 
@@ -59,6 +59,7 @@ let draw =
         gameHasStarted,
         gameWasStarted,
         exitStatus,
+        playerDead,
         rightPressed,
         leftPressed,
         shotBool,
@@ -74,7 +75,6 @@ let draw =
         starImage,
         bulletImage,
         font,
-        playerDead,
       } as state,
       env,
     ) => {
@@ -141,11 +141,9 @@ let draw =
   );
 
   /* Filter out ships that have collided with a bullet */
-  let shipsKilledByBullets =
+  let enemiesNotShot =
     List.filter(
       ((xTemp, yTemp)) =>
-        List.exists(
-          ((x, y)) =>
             !
               List.exists(
                 ((bulletX, bulletY)) =>
@@ -159,17 +157,13 @@ let draw =
                   ),
                 bulletPositions,
               ),
-          enemyShips,
-        ),
       enemyShips,
     );
 
   /* Filter out bullets that have collided with a ship */
-  let bulletPositions =
+  let strayBullets =
     List.filter(
       ((bulletX, bulletY)) =>
-        List.exists(
-          ((x, y)) =>
             !
               List.exists(
                 ((xTemp, yTemp)) =>
@@ -183,8 +177,6 @@ let draw =
                   ),
                 enemyShips,
               ),
-          bulletPositions,
-        ),
       bulletPositions,
     );
 
@@ -192,13 +184,16 @@ let draw =
    * At this point, only ships that have been SHOT are DESTROYED (filter above)
    * Therefore, we can give a point for every ship destroyed
    */
-  let newScore =
-    List.length(enemyShips) > List.length(shipsKilledByBullets)
+  let updatedScore =
+    List.length(enemyShips) > List.length(enemiesNotShot)
       ? score + 1 : score;
 
-  /* filter out ships that hit player */
-  /* At this point, the only other ships are ones that are safe or colliding with us */
-  let newShips =
+  /* filter out ships that hit player
+   * At this point in this frame, the only enemies left on screen are 
+   * ships that have not gone out of bounds or been shot
+   * Any other collision would be between an enemy and player ship
+   */
+  let survivingEnemies =
     List.filter(
       ((enemyX, enemyY)) =>
         !
@@ -207,37 +202,62 @@ let draw =
             31.,
             40.,
             (shipX, 700.00),
-            31.,
+            40.,
             40.,
           ),
-      shipsKilledByBullets,
+      enemiesNotShot,
     );
 
-  /* previous step filtered ships that hit us */
-  /* If the amount of ships differ, there was a collision */
-  /* Therefore, we can safely assert the status of the player */
+  /* previous step filtered ships that hit us
+   * If there are less ships since that check than a ship must have hit us
+   * Therefore, we can safely assert the status of the player
+   */
   let isPlayerDead =
-    List.length(shipsKilledByBullets) > List.length(newShips);
+    List.length(enemiesNotShot) > List.length(survivingEnemies);
 
   /* Now we can FILTER out ENEMY SHIPS that are out of bounds */
-  let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
+  let enemiesStillOnScreen = List.filter(((xTemp, yTemp)) => yTemp < 800, survivingEnemies);
 
   /* Now we can FILTER out BULLETS that are out of bounds */
-  let bulletPositions =
-    List.filter(((xBullet, yBullet)) => yBullet > 0, bulletPositions);
+  let bulletsStillOnScreen =
+    List.filter(((xBullet, yBullet)) => yBullet > 0, strayBullets);
 
   /* Now we can FILTER out STARS that are out of bounds */
   let starPositions =
     List.filter(((xTemp, yTemp)) => yTemp < 800, starPositions);
 
   /* MOVE BULLETS UPWARD */
-  let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletPositions);
+  let bulletPositions = List.map(((x, y)) => (x, y - 2), bulletsStillOnScreen);
 
   /* MOVE STARS DOWNWARD */
   let starPositions = List.map(((x, y)) => (x, y + 15), starPositions);
 
   /* MOVE SHIPS DOWNWARD */
-  let newShips = List.map(((x, y)) => (x, y + 3), newShips);
+  let enemiesWithUpdatedPositions = List.map(((x, y)) => (x, y + 3), enemiesStillOnScreen);
+
+  /* respawn enemies */
+  let remainingEnemies = List.length(enemyShips) < 12
+              ? List.append(
+                  [(
+                      Utils.random(50, Env.width(env) - 100),
+                      0 - Utils.random(28, 600),
+                  )],
+                  enemiesWithUpdatedPositions,
+                )
+              : enemiesWithUpdatedPositions
+
+  /* respawning stars */
+  let prettySky = List.length(starPositions) < 52
+              ? List.append(
+                  [
+                    (
+                      Utils.random(-10, Env.width(env) + 10),
+                      0 - Utils.random(28, 600),
+                    ),
+                  ],
+                  starPositions,
+                )
+              : starPositions
 
   /* Set new X COORDINATE for PLAYER */
   let shipCurrentX =
@@ -258,35 +278,13 @@ let draw =
     : gameHasStarted
         ? {
           ...state,
-          score: newScore,
+          score: updatedScore,
           shotBool: false,
           bulletPositions,
           shipX: shipCurrentX,
           lastX: lastXNew,
-          enemyShips:
-            List.length(enemyShips) < 12
-              ? List.append(
-                  [
-                    (
-                      Utils.random(50, Env.width(env) - 100),
-                      0 - Utils.random(28, 600),
-                    ),
-                  ],
-                  newShips,
-                )
-              : newShips,
-          starPositions:
-            List.length(starPositions) < 52
-              ? List.append(
-                  [
-                    (
-                      Utils.random(-10, Env.width(env) + 10),
-                      0 - Utils.random(28, 600),
-                    ),
-                  ],
-                  starPositions,
-                )
-              : starPositions,
+          enemyShips: remainingEnemies,
+          starPositions: prettySky,
         }
         /* IF GAME has yet to START or has been PAUSED
          * If game PAUSED freeze PLAYER
