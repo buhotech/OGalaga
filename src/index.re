@@ -19,9 +19,11 @@ type stateT = {
   /* Images & Fonts */
   enemyShipImage: imageT,
   playerShipImage: imageT,
+  deadPlayerShipImage: imageT,
   starImage: imageT,
   bulletImage: imageT,
   font: fontT,
+  playerDead: bool,
 };
 
 /* BOILERPLATE */
@@ -42,9 +44,12 @@ let setup = env => {
     lastX: 0.,
     enemyShipImage: Draw.loadImage(~filename="assets/enemyShip.png", env),
     playerShipImage: Draw.loadImage(~filename="assets/playerShip.png", env),
+    deadPlayerShipImage:
+      Draw.loadImage(~filename="assets/explosion.png", env),
     starImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     bulletImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
+    playerDead: false,
   };
 };
 
@@ -65,9 +70,11 @@ let draw =
         lastX,
         enemyShipImage,
         playerShipImage,
+        deadPlayerShipImage,
         starImage,
         bulletImage,
         font,
+        playerDead,
       } as state,
       env,
     ) => {
@@ -99,7 +106,11 @@ let draw =
   List.iter(item => Draw.image(enemyShipImage, ~pos=item, env), enemyShips);
 
   /* Draw Player */
-  Draw.image(playerShipImage, ~pos=(int_of_float(shipX), 700), env);
+  Draw.image(
+    playerDead ? deadPlayerShipImage : playerShipImage,
+    ~pos=(int_of_float(shipX), 700),
+    env,
+  );
 
   /* Draw bullets */
   List.iter(
@@ -115,11 +126,13 @@ let draw =
   Draw.text(
     ~font,
     ~body=
-      gameHasStarted
-        ? string_of_int(score)
-        : gameWasStarted
-            ? "Press 'P' to resume or 'Q' to quit"
-            : "Press 'P' to start or 'Q' to quit",
+      playerDead
+        ? "GAME OVER                         "
+        : gameHasStarted
+            ? string_of_int(score)
+            : gameWasStarted
+                ? "Press 'P' to resume or 'Q' to quit"
+                : "Press 'P' to start or 'Q' to quit",
     ~pos=
       gameHasStarted
         ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 240, 40),
@@ -127,7 +140,7 @@ let draw =
   );
 
   /* Filter out ships that have collided with a bullet */
-  let newShips =
+  let shipsKilledByBullets =
     List.filter(
       ((xTemp, yTemp)) =>
         List.exists(
@@ -179,7 +192,31 @@ let draw =
    * Therefore, we can give a point for every ship destroyed
    */
   let newScore =
-    List.length(enemyShips) > List.length(newShips) ? score + 1 : score;
+    List.length(enemyShips) > List.length(shipsKilledByBullets)
+      ? score + 1 : score;
+
+  /* filter out ships that hit player */
+  /* At this point, the only other ships are ones that are safe or colliding with us */
+  let newShips =
+    List.filter(
+      ((enemyX, enemyY)) =>
+        !
+          Utils.intersectRectRect(
+            (float_of_int(enemyX - 20), float_of_int(enemyY)),
+            31.,
+            40.,
+            (shipX, 700.00),
+            31.,
+            40.,
+          ),
+      shipsKilledByBullets,
+    );
+
+  /* previous step filtered ships that hit us */
+  /* If the amount of ships differ, there was a collision */
+  /* Therefore, we can safely assert the status of the player */
+  let isPlayerDead =
+    List.length(shipsKilledByBullets) > List.length(newShips);
 
   /* Now we can FILTER out ENEMY SHIPS that are out of bounds */
   let newShips = List.filter(((xTemp, yTemp)) => yTemp < 800, newShips);
@@ -215,48 +252,51 @@ let draw =
   let lastXNew = shotBool ? shipX : lastX;
 
   /* NEXT GAME STATE */
-  gameHasStarted
-    ? {
-      ...state,
-      score: newScore,
-      shotBool: false,
-      bulletPositions,
-      shipX: shipCurrentX,
-      lastX: lastXNew,
-      enemyShips:
-        List.length(enemyShips) < 12
-          ? List.append(
-              [
-                (
-                  Utils.random(50, Env.width(env) - 100),
-                  0 - Utils.random(28, 600),
-                ),
-              ],
-              newShips,
-            )
-          : newShips,
-      starPositions:
-        List.length(starPositions) < 52
-          ? List.append(
-              [
-                (
-                  Utils.random(-10, Env.width(env) + 10),
-                  0 - Utils.random(28, 600),
-                ),
-              ],
-              starPositions,
-            )
-          : starPositions,
-    }
-    /* IF GAME has yet to START or has been PAUSED
-     * If game PAUSED freeze PLAYER
-     * If game NEVER STARTED keep PLAYER CENTERED
-     */
-    : {
-      ...state,
-      shipX: gameWasStarted ? shipX : float_of_int(Env.width(env) / 2 - 30),
-      gameHasStarted: false,
-    };
+  isPlayerDead
+    ? {...state, playerDead: true}
+    : gameHasStarted
+        ? {
+          ...state,
+          score: newScore,
+          shotBool: false,
+          bulletPositions,
+          shipX: shipCurrentX,
+          lastX: lastXNew,
+          enemyShips:
+            List.length(enemyShips) < 12
+              ? List.append(
+                  [
+                    (
+                      Utils.random(50, Env.width(env) - 100),
+                      0 - Utils.random(28, 600),
+                    ),
+                  ],
+                  newShips,
+                )
+              : newShips,
+          starPositions:
+            List.length(starPositions) < 52
+              ? List.append(
+                  [
+                    (
+                      Utils.random(-10, Env.width(env) + 10),
+                      0 - Utils.random(28, 600),
+                    ),
+                  ],
+                  starPositions,
+                )
+              : starPositions,
+        }
+        /* IF GAME has yet to START or has been PAUSED
+         * If game PAUSED freeze PLAYER
+         * If game NEVER STARTED keep PLAYER CENTERED
+         */
+        : {
+          ...state,
+          shipX:
+            gameWasStarted ? shipX : float_of_int(Env.width(env) / 2 - 30),
+          gameHasStarted: false,
+        };
 };
 
 let keyPressed =
