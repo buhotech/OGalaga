@@ -86,19 +86,19 @@ let draw =
     exit(0);
   };
 
-  if (gameWasStarted && haveNotPlayedSongYet){
+  if (gameWasStarted && haveNotPlayedSongYet) {
     Env.playSound(backgroundMusic, ~volume=2.110, ~loop=true, env);
-  }
-  
+  };
+
   /* Filter out ships that have collided with a bullet */
   let enemiesNotShot =
     List.filter(
-      ((xTemp, yTemp)) =>
+      ((enemyX, enemyY)) =>
         !
           List.exists(
             ((bulletX, bulletY)) =>
               Utils.intersectRectRect(
-                (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                (float_of_int(enemyX + 11), float_of_int(enemyY)),
                 31.,
                 40.,
                 (float_of_int(bulletX), float_of_int(bulletY)),
@@ -116,9 +116,9 @@ let draw =
       ((bulletX, bulletY)) =>
         !
           List.exists(
-            ((xTemp, yTemp)) =>
+            ((enemyX, enemyY)) =>
               Utils.intersectRectRect(
-                (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                (float_of_int(enemyX + 11), float_of_int(enemyY)),
                 31.,
                 40.,
                 (float_of_int(bulletX), float_of_int(bulletY)),
@@ -143,7 +143,7 @@ let draw =
    * ships that have not gone out of bounds or been shot
    * Any other collision would be between an enemy and player ship
    */
-  let survivingEnemies =
+  let enemiesNotShotAndNotCollidedWith =
     List.filter(
       ((enemyX, enemyY)) =>
         !
@@ -163,11 +163,11 @@ let draw =
    * Therefore, we can safely assert the status of the player
    */
   let isPlayerDead =
-    List.length(enemiesNotShot) > List.length(survivingEnemies);
+    List.length(enemiesNotShot) > List.length(enemiesNotShotAndNotCollidedWith);
 
   /* Now we can FILTER out ENEMY SHIPS that are out of bounds */
   let enemiesStillOnScreen =
-    List.filter(((xTemp, yTemp)) => yTemp < 800, survivingEnemies);
+    List.filter(((enemyX, enemyY)) => enemyY < 800, enemiesNotShotAndNotCollidedWith);
 
   /* Now we can FILTER out BULLETS that are out of bounds */
   let bulletsStillOnScreen =
@@ -175,7 +175,7 @@ let draw =
 
   /* Now we can FILTER out STARS that are out of bounds */
   let starPositions =
-    List.filter(((xTemp, yTemp)) => yTemp < 800, starPositions);
+    List.filter(((starX, starY)) => starY < 800, starPositions);
 
   /* MOVE BULLETS UPWARD */
   let bulletPositions =
@@ -226,8 +226,11 @@ let draw =
               ? float_of_int(Env.width(env)) : shipX -. 4.20
           : shipX;
 
-  /*  */
-  let pointsAfterOutOfBoundCheck = enemiesStillOnScreen < survivingEnemies ? updatedScore-1 : updatedScore
+  /* If there are less enemies, after filtering out ships that have gone out of bounds
+   * then player failed to kill a ship. This is penalized with the less of a point
+   */
+  let pointsAfterOutOfBoundCheck =
+    enemiesStillOnScreen < enemiesNotShotAndNotCollidedWith ? updatedScore - 1 : updatedScore;
 
   /* Paint background */
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
@@ -273,7 +276,7 @@ let draw =
     ~font,
     ~body=
       playerDead
-        ? "GAME OVER - SPACE TO RESTART"
+        ? "GAME OVER - PRESS 'P' TO RESTART"
         : gameHasStarted
             ? string_of_int(score)
             : gameWasStarted
@@ -281,9 +284,9 @@ let draw =
                 : "Press 'P' to start or 'Q' to quit",
     ~pos=
       playerDead
-        ? (Env.width(env) / 2 - 280, 40)
+        ? (Env.width(env) / 2 - 304, 40)
         : gameHasStarted
-            ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 240, 40),
+            ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 260, 40),
     env,
   );
 
@@ -315,46 +318,52 @@ let draw =
 
 let keyPressed =
     (
-      {shipX, bulletPositions, exitStatus, gameHasStarted, playerDead, haveNotPlayedSongYet} as state,
+      {
+        shipX,
+        bulletPositions,
+        exitStatus,
+        gameHasStarted,
+        playerDead,
+        haveNotPlayedSongYet,
+      } as state,
       env,
     ) =>
   Events.(
     switch (Env.keyCode(env)) {
     | Q => {...state, exitStatus: true}
     | P =>
-    playerDead
-    ? {
-      ...state,
-      playerDead: false,
-      gameHasStarted: true,
-      gameWasStarted: true,
-      exitStatus: false,
-      rightPressed: false,
-      leftPressed: false,
-      shotBool: false,
-      score: 0,
-      enemyShips: [],
-      bulletPositions: [],
-      starPositions: [],
-      shipX,
-    }
-    : {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
+      playerDead
+        ? {
+          ...state,
+          playerDead: false,
+          gameHasStarted: true,
+          gameWasStarted: true,
+          exitStatus: false,
+          rightPressed: false,
+          leftPressed: false,
+          shotBool: false,
+          score: 0,
+          enemyShips: [],
+          bulletPositions: [],
+          starPositions: [],
+          shipX,
+        }
+        : {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
     | Right
     | D => {...state, rightPressed: true}
     | Left
     | A => {...state, leftPressed: true}
-    | Space =>
-      {
-          ...state,
-          shotBool: true,
-          bulletPositions:
-            gameHasStarted
-              ? List.append(
-                  [(int_of_float(shipX +. 34.), 700)],
-                  bulletPositions,
-                )
-              : bulletPositions,
-        }
+    | Space => {
+        ...state,
+        shotBool: true,
+        bulletPositions:
+          gameHasStarted
+            ? List.append(
+                [(int_of_float(shipX +. 34.), 700)],
+                bulletPositions,
+              )
+            : bulletPositions,
+      }
     | _ => state
     }
   );
