@@ -86,10 +86,10 @@ let draw =
     exit(0);
   };
 
-  if (gameWasStarted && haveNotPlayedSongYet){
+  if (gameWasStarted && haveNotPlayedSongYet) {
     Env.playSound(backgroundMusic, ~volume=2.110, ~loop=true, env);
-  }
-  
+  };
+
   /* Filter out ships that have collided with a bullet */
   let enemiesNotShot =
     List.filter(
@@ -227,7 +227,8 @@ let draw =
           : shipX;
 
   /*  */
-  let pointsAfterOutOfBoundCheck = enemiesStillOnScreen < survivingEnemies ? updatedScore-1 : updatedScore
+  let pointsAfterOutOfBoundCheck =
+    enemiesStillOnScreen < survivingEnemies ? updatedScore - 1 : updatedScore;
 
   /* Paint background */
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
@@ -315,46 +316,52 @@ let draw =
 
 let keyPressed =
     (
-      {shipX, bulletPositions, exitStatus, gameHasStarted, playerDead, haveNotPlayedSongYet} as state,
+      {
+        shipX,
+        bulletPositions,
+        exitStatus,
+        gameHasStarted,
+        playerDead,
+        haveNotPlayedSongYet,
+      } as state,
       env,
     ) =>
   Events.(
     switch (Env.keyCode(env)) {
     | Q => {...state, exitStatus: true}
     | P =>
-    playerDead
-    ? {
-      ...state,
-      playerDead: false,
-      gameHasStarted: true,
-      gameWasStarted: true,
-      exitStatus: false,
-      rightPressed: false,
-      leftPressed: false,
-      shotBool: false,
-      score: 0,
-      enemyShips: [],
-      bulletPositions: [],
-      starPositions: [],
-      shipX,
-    }
-    : {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
+      playerDead
+        ? {
+          ...state,
+          playerDead: false,
+          gameHasStarted: true,
+          gameWasStarted: true,
+          exitStatus: false,
+          rightPressed: false,
+          leftPressed: false,
+          shotBool: false,
+          score: 0,
+          enemyShips: [],
+          bulletPositions: [],
+          starPositions: [],
+          shipX,
+        }
+        : {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
     | Right
     | D => {...state, rightPressed: true}
     | Left
     | A => {...state, leftPressed: true}
-    | Space =>
-      {
-          ...state,
-          shotBool: true,
-          bulletPositions:
-            gameHasStarted
-              ? List.append(
-                  [(int_of_float(shipX +. 34.), 700)],
-                  bulletPositions,
-                )
-              : bulletPositions,
-        }
+    | Space => {
+        ...state,
+        shotBool: true,
+        bulletPositions:
+          gameHasStarted
+            ? List.append(
+                [(int_of_float(shipX +. 34.), 700)],
+                bulletPositions,
+              )
+            : bulletPositions,
+      }
     | _ => state
     }
   );
