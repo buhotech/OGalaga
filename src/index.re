@@ -16,13 +16,15 @@ type stateT = {
   bulletPositions: list((int, int)),
   starPositions: list((int, int)),
   shipX: float,
-  /* Images & Fonts */
+  /* Media */
   enemyShipImage: imageT,
   playerShipImage: imageT,
   deadPlayerShipImage: imageT,
   starImage: imageT,
   bulletImage: imageT,
   font: fontT,
+  backgroundMusic: soundT,
+  haveNotPlayedSongYet: bool,
 };
 
 /* BOILERPLATE */
@@ -48,6 +50,8 @@ let setup = env => {
     starImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     bulletImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
+    backgroundMusic: Env.loadSound("assets/b.wav", env),
+    haveNotPlayedSongYet: true,
   };
 };
 
@@ -72,6 +76,8 @@ let draw =
         starImage,
         bulletImage,
         font,
+        backgroundMusic,
+        haveNotPlayedSongYet,
       } as state,
       env,
     ) => {
@@ -80,6 +86,10 @@ let draw =
     exit(0);
   };
 
+  if (gameWasStarted && haveNotPlayedSongYet){
+    Env.playSound(backgroundMusic, ~volume=2.110, ~loop=true, env);
+  }
+  
   /* Filter out ships that have collided with a bullet */
   let enemiesNotShot =
     List.filter(
@@ -284,6 +294,7 @@ let draw =
         ? {
           ...state,
           score: pointsAfterOutOfBoundCheck,
+          haveNotPlayedSongYet: false,
           shotBool: false,
           bulletPositions,
           shipX: shipCurrentX,
@@ -304,38 +315,36 @@ let draw =
 
 let keyPressed =
     (
-      {shipX, bulletPositions, exitStatus, gameHasStarted, playerDead} as state,
+      {shipX, bulletPositions, exitStatus, gameHasStarted, playerDead, haveNotPlayedSongYet} as state,
       env,
     ) =>
   Events.(
     switch (Env.keyCode(env)) {
     | Q => {...state, exitStatus: true}
     | P =>
-      playerDead
-        ? {...state, shipX}
-        : {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
+    playerDead
+    ? {
+      ...state,
+      playerDead: false,
+      gameHasStarted: true,
+      gameWasStarted: true,
+      exitStatus: false,
+      rightPressed: false,
+      leftPressed: false,
+      shotBool: false,
+      score: 0,
+      enemyShips: [],
+      bulletPositions: [],
+      starPositions: [],
+      shipX,
+    }
+    : {...state, gameHasStarted: !gameHasStarted, gameWasStarted: true}
     | Right
     | D => {...state, rightPressed: true}
     | Left
     | A => {...state, leftPressed: true}
     | Space =>
-      playerDead
-        ? {
-          ...state,
-          playerDead: false,
-          gameHasStarted: true,
-          gameWasStarted: true,
-          exitStatus: false,
-          rightPressed: false,
-          leftPressed: false,
-          shotBool: false,
-          score: 0,
-          enemyShips: [],
-          bulletPositions: [],
-          starPositions: [],
-          shipX,
-        }
-        : {
+      {
           ...state,
           shotBool: true,
           bulletPositions:
