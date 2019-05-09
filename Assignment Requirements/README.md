@@ -1,8 +1,3 @@
----
-layout: page
-title: CSCI 49201 - Functional Programming in OCaml - Projects
----
-
 ## [Projects](http://a-nikolaev.github.io/fp/projects/)
 
 ### Description
