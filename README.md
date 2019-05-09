@@ -7,6 +7,8 @@
 ### Install
 
 ```
+git clone https://github.com/buhotech/OGalaga.git
+cd OGalaga
 npm install
 ```
 
