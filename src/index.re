@@ -23,7 +23,6 @@ type stateT = {
   starImage: imageT,
   bulletImage: imageT,
   font: fontT,
-  combo: int,
 };
 
 /* BOILERPLATE */
@@ -49,7 +48,6 @@ let setup = env => {
     starImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     bulletImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
-    combo: 0,
   };
 };
 
@@ -74,7 +72,6 @@ let draw =
         starImage,
         bulletImage,
         font,
-        combo,
       } as state,
       env,
     ) => {
@@ -221,8 +218,7 @@ let draw =
 
   /*  */
   let pointsAfterOutOfBoundCheck = enemiesStillOnScreen < survivingEnemies ? updatedScore-1 : updatedScore
-  let updatedCombo = (!(List.length(enemiesStillOnScreen) <= List.length(enemiesNotShot)) && !(List.length(remainingEnemies) >= List.length(enemyShips))) ? combo+1 : 0
-  /* enemiesStillOnScreen < survivingEnemies ? updatedScore-1 : updatedScore */
+
   /* Paint background */
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
 
@@ -269,7 +265,7 @@ let draw =
       playerDead
         ? "GAME OVER - SPACE TO RESTART"
         : gameHasStarted
-            ? combo>0 ? string_of_int(score) ++ "COMBO!" : string_of_int(score)
+            ? string_of_int(score)
             : gameWasStarted
                 ? "Press 'P' to resume or 'Q' to quit"
                 : "Press 'P' to start or 'Q' to quit",
@@ -287,7 +283,6 @@ let draw =
     : gameHasStarted
         ? {
           ...state,
-          combo: updatedCombo,
           score: pointsAfterOutOfBoundCheck,
           shotBool: false,
           bulletPositions,
