@@ -93,12 +93,12 @@ let draw =
   /* Filter out ships that have collided with a bullet */
   let enemiesNotShot =
     List.filter(
-      ((xTemp, yTemp)) =>
+      ((enemyX, enemyY)) =>
         !
           List.exists(
             ((bulletX, bulletY)) =>
               Utils.intersectRectRect(
-                (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                (float_of_int(enemyX + 11), float_of_int(enemyY)),
                 31.,
                 40.,
                 (float_of_int(bulletX), float_of_int(bulletY)),
@@ -116,9 +116,9 @@ let draw =
       ((bulletX, bulletY)) =>
         !
           List.exists(
-            ((xTemp, yTemp)) =>
+            ((enemyX, enemyY)) =>
               Utils.intersectRectRect(
-                (float_of_int(xTemp + 11), float_of_int(yTemp)),
+                (float_of_int(enemyX + 11), float_of_int(enemyY)),
                 31.,
                 40.,
                 (float_of_int(bulletX), float_of_int(bulletY)),
@@ -143,7 +143,7 @@ let draw =
    * ships that have not gone out of bounds or been shot
    * Any other collision would be between an enemy and player ship
    */
-  let survivingEnemies =
+  let enemiesNotShotAndNotCollidedWith =
     List.filter(
       ((enemyX, enemyY)) =>
         !
@@ -163,11 +163,11 @@ let draw =
    * Therefore, we can safely assert the status of the player
    */
   let isPlayerDead =
-    List.length(enemiesNotShot) > List.length(survivingEnemies);
+    List.length(enemiesNotShot) > List.length(enemiesNotShotAndNotCollidedWith);
 
   /* Now we can FILTER out ENEMY SHIPS that are out of bounds */
   let enemiesStillOnScreen =
-    List.filter(((xTemp, yTemp)) => yTemp < 800, survivingEnemies);
+    List.filter(((enemyX, enemyY)) => enemyY < 800, enemiesNotShotAndNotCollidedWith);
 
   /* Now we can FILTER out BULLETS that are out of bounds */
   let bulletsStillOnScreen =
@@ -175,7 +175,7 @@ let draw =
 
   /* Now we can FILTER out STARS that are out of bounds */
   let starPositions =
-    List.filter(((xTemp, yTemp)) => yTemp < 800, starPositions);
+    List.filter(((starX, starY)) => starY < 800, starPositions);
 
   /* MOVE BULLETS UPWARD */
   let bulletPositions =
@@ -226,9 +226,11 @@ let draw =
               ? float_of_int(Env.width(env)) : shipX -. 4.20
           : shipX;
 
-  /*  */
+  /* If there are less enemies, after filtering out ships that have gone out of bounds
+   * then player failed to kill a ship. This is penalized with the less of a point
+   */
   let pointsAfterOutOfBoundCheck =
-    enemiesStillOnScreen < survivingEnemies ? updatedScore - 1 : updatedScore;
+    enemiesStillOnScreen < enemiesNotShotAndNotCollidedWith ? updatedScore - 1 : updatedScore;
 
   /* Paint background */
   Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
