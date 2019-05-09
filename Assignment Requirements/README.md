@@ -7,7 +7,7 @@ title: CSCI 49201 - Functional Programming in OCaml - Projects
 
 ### Description
 
-In here lies the project description as provided by our professor, [Alexey Nikolaev](https://github.com/a-nikolaev), as well as the our project presentation ([PDF](<./OGalaga\ Presentation.pdf>)|[Google Slides](http://bit.ly/ogalaga)) and [technical write-up](null).
+In here lies the project description as provided by our professor, [Alexey Nikolaev](https://github.com/a-nikolaev), as well as the our project presentation ([PDF](<./OGalaga Presentation.pdf>)|[Google Slides](http://bit.ly/ogalaga)) and [technical write-up](null).
 
 In the second half of the semester, you will work on a project, which will replace regular weekly homeworks.
 
