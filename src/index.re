@@ -16,7 +16,6 @@ type stateT = {
   bulletPositions: list((int, int)),
   starPositions: list((int, int)),
   shipX: float,
-  lastX: float,
   /* Images & Fonts */
   enemyShipImage: imageT,
   playerShipImage: imageT,
@@ -24,6 +23,7 @@ type stateT = {
   starImage: imageT,
   bulletImage: imageT,
   font: fontT,
+  combo: int,
 };
 
 /* BOILERPLATE */
@@ -42,7 +42,6 @@ let setup = env => {
     bulletPositions: [],
     starPositions: [],
     shipX: float_of_int(Env.width(env) / 2 - 30),
-    lastX: 0.,
     enemyShipImage: Draw.loadImage(~filename="assets/enemyShip.png", env),
     playerShipImage: Draw.loadImage(~filename="assets/playerShip.png", env),
     deadPlayerShipImage:
@@ -50,6 +49,7 @@ let setup = env => {
     starImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     bulletImage: Draw.loadImage(~filename="assets/playerBullet.png", env),
     font: Draw.loadFont(~filename="assets/fancy.fnt", ~isPixel=true, env),
+    combo: 0,
   };
 };
 
@@ -68,13 +68,13 @@ let draw =
         bulletPositions,
         starPositions,
         shipX,
-        lastX,
         enemyShipImage,
         playerShipImage,
         deadPlayerShipImage,
         starImage,
         bulletImage,
         font,
+        combo,
       } as state,
       env,
     ) => {
@@ -82,64 +82,6 @@ let draw =
   if (exitStatus) {
     exit(0);
   };
-
-  /* Paint background */
-  Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
-
-  /* Draw stars */
-  List.iter(
-    item =>
-      Draw.pixel(
-        item,
-        Utils.color(
-          ~r=Utils.random(0, 255),
-          ~g=Utils.random(0, 255),
-          ~b=Utils.random(0, 255),
-          ~a=255,
-        ),
-        env,
-      ),
-    starPositions,
-  );
-
-  /* Draw enemies */
-  List.iter(item => Draw.image(enemyShipImage, ~pos=item, env), enemyShips);
-
-  /* Draw Player */
-  Draw.image(
-    playerDead ? deadPlayerShipImage : playerShipImage,
-    ~pos=(int_of_float(shipX), 700),
-    env,
-  );
-
-  /* Draw bullets */
-  List.iter(
-    ((x, y)) => Draw.image(bulletImage, ~pos=(x, y - 1), env),
-    bulletPositions,
-  );
-
-  /*
-   * Print SCORE if game has started
-   * Print START PROMPT if player has yet to start game
-   * Print RESUME PROMPT if game is pauseed
-   */
-  Draw.text(
-    ~font,
-    ~body=
-      playerDead
-        ? "GAME OVER - SPACE TO RESTART"
-        : gameHasStarted
-            ? string_of_int(score)
-            : gameWasStarted
-                ? "Press 'P' to resume or 'Q' to quit"
-                : "Press 'P' to start or 'Q' to quit",
-    ~pos=
-      playerDead
-        ? (Env.width(env) / 2 - 280, 40)
-        : gameHasStarted
-            ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 240, 40),
-    env,
-  );
 
   /* Filter out ships that have collided with a bullet */
   let enemiesNotShot =
@@ -277,8 +219,67 @@ let draw =
               ? float_of_int(Env.width(env)) : shipX -. 4.20
           : shipX;
 
-  /* I DON'T REMEMBER. PLEASE DOCUMENT THIS FOR ME, ANGEL */
-  let lastXNew = shotBool ? shipX : lastX;
+  /*  */
+  let pointsAfterOutOfBoundCheck = enemiesStillOnScreen < survivingEnemies ? updatedScore-1 : updatedScore
+  let updatedCombo = (!(List.length(enemiesStillOnScreen) <= List.length(enemiesNotShot)) && !(List.length(remainingEnemies) >= List.length(enemyShips))) ? combo+1 : 0
+  /* enemiesStillOnScreen < survivingEnemies ? updatedScore-1 : updatedScore */
+  /* Paint background */
+  Draw.background(Utils.color(~r=0, ~g=15, ~b=25, ~a=255), env);
+
+  /* Draw stars */
+  List.iter(
+    item =>
+      Draw.pixel(
+        item,
+        Utils.color(
+          ~r=Utils.random(0, 255),
+          ~g=Utils.random(0, 255),
+          ~b=Utils.random(0, 255),
+          ~a=255,
+        ),
+        env,
+      ),
+    starPositions,
+  );
+
+  /* Draw enemies */
+  List.iter(item => Draw.image(enemyShipImage, ~pos=item, env), enemyShips);
+
+  /* Draw Player */
+  Draw.image(
+    playerDead ? deadPlayerShipImage : playerShipImage,
+    ~pos=(int_of_float(shipX), 700),
+    env,
+  );
+
+  /* Draw bullets */
+  List.iter(
+    ((x, y)) => Draw.image(bulletImage, ~pos=(x, y - 1), env),
+    bulletPositions,
+  );
+
+  /*
+   * Print SCORE if game has started
+   * Print START PROMPT if player has yet to start game
+   * Print RESUME PROMPT if game is pauseed
+   */
+  Draw.text(
+    ~font,
+    ~body=
+      playerDead
+        ? "GAME OVER - SPACE TO RESTART"
+        : gameHasStarted
+            ? combo>0 ? string_of_int(score) ++ "COMBO!" : string_of_int(score)
+            : gameWasStarted
+                ? "Press 'P' to resume or 'Q' to quit"
+                : "Press 'P' to start or 'Q' to quit",
+    ~pos=
+      playerDead
+        ? (Env.width(env) / 2 - 280, 40)
+        : gameHasStarted
+            ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 240, 40),
+    env,
+  );
 
   /* NEXT GAME STATE */
   isPlayerDead
@@ -286,11 +287,11 @@ let draw =
     : gameHasStarted
         ? {
           ...state,
-          score: updatedScore,
+          combo: updatedCombo,
+          score: pointsAfterOutOfBoundCheck,
           shotBool: false,
           bulletPositions,
           shipX: shipCurrentX,
-          lastX: lastXNew,
           enemyShips: remainingEnemies,
           starPositions: prettySky,
         }
