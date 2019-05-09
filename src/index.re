@@ -286,7 +286,7 @@ let draw =
       playerDead
         ? (Env.width(env) / 2 - 304, 40)
         : gameHasStarted
-            ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 260, 40),
+            ? (Env.width(env) / 2, 40) : (Env.width(env) / 2 - 240, 40),
     env,
   );
 
